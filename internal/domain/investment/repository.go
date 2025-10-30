@@ -2,7 +2,7 @@ package investment
 
 import "github.com/google/uuid"
 
-type Repositort interface {
+type Repository interface {
 	Create(investment *Investment) error
 	List() ([]*Investment, error)
 	Update(investment *Investment) error
