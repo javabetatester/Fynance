@@ -91,15 +91,15 @@ func (s *JwtService) ParseToken(tokenString string) (*Claim, error) {
 
 	claims, ok := token.Claims.(*Claim)
 	if !ok {
-		return nil, fmt.Errorf("não foi possível extrair as claims do token")
+		return nil, fmt.Errorf("Não foi possível extrair as claims do token")
 	}
-	
+
 	if !token.Valid {
-		return nil, fmt.Errorf("token inválido")
+		return nil, fmt.Errorf("Token inválido")
 	}
 
 	if claims.ExpiresAt < time.Now().Unix() {
-		return nil, fmt.Errorf("token expirado: expirou em %v, agora é %v", 
+		return nil, fmt.Errorf("Token expirado: expirou em %v, agora é %v",
 			time.Unix(claims.ExpiresAt, 0), time.Now())
 	}
 
