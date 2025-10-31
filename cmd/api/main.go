@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Fynance/internal/domain/login"
+	login "Fynance/internal/domain/auth"
 	"Fynance/internal/domain/user"
 	"Fynance/internal/infrastructure"
 	"Fynance/internal/middleware"
@@ -17,16 +17,17 @@ func main() {
 	userService := user.Service{
 		Repository: &infrastructure.UserRepository{DB: db},
 	}
+
 	loginService := login.Service{
-		Repository: &infrastructure.LoginRepository{DB: db},
+		Repository: &infrastructure.UserRepository{DB: db},
 	}
 
 	jwtService := utils.NewJwtService()
 
 	handler := routes.Handler{
-		LoginService: loginService,
 		UserService:  userService,
 		JwtService:   jwtService,
+		LoginService: loginService,
 	}
 
 	router := gin.Default()

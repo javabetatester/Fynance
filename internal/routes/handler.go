@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"Fynance/internal/domain/login"
+	login "Fynance/internal/domain/auth"
 	"Fynance/internal/domain/user"
 	"Fynance/internal/utils"
 )
