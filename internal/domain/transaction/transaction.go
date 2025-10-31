@@ -19,8 +19,8 @@ type Transaction struct {
 }
 
 type Category struct {
-	CreatedBy uuid.UUID
-	Id        int
-	Name      string
-	Icon      string
+	UserId uuid.UUID
+	Id     int
+	Name   string
+	Icon   string
 }
