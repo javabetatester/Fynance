@@ -26,6 +26,7 @@ func main() {
 	handler := routes.Handler{
 		LoginService: loginService,
 		UserService:  userService,
+		JwtService:   jwtService,
 	}
 
 	router := gin.Default()
@@ -38,9 +39,10 @@ func main() {
 
 	private := router.Group("/api")
 	private.Use(middleware.AuthMiddleware(jwtService))
+	private.Use(middleware.RequireOwnership())
 	{
 		private.GET("/users/:id", handler.GetUserByID)
-		private.GET("/users/email/:email", handler.GetUserByEmail)
+		private.GET("/users/email", handler.GetUserByEmail)
 		private.PUT("/users/:id", handler.UpdateUser)
 		private.DELETE("/users/:id", handler.DeleteUser)
 	}
