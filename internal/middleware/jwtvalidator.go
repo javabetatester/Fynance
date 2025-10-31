@@ -27,8 +27,7 @@ func RequireOwnership() gin.HandlerFunc {
 		idFromURL := c.Param("id")
 		if idFromURL != "" {
 
-			// Verificar se os IDs são iguais (ignorando maiúsculas/minúsculas)
-			if strings.ToLower(tokenUserID) != strings.ToLower(idFromURL) {
+			if !strings.EqualFold(tokenUserID, idFromURL) {
 				c.JSON(http.StatusForbidden, gin.H{"error": "You can only access your own resources"})
 				c.Abort()
 				return
