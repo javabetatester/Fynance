@@ -77,9 +77,7 @@ func (s *JwtService) ValidateToken(tokenString string) bool {
 }
 
 func (s *JwtService) ParseToken(tokenString string) (*Claim, error) {
-	// Verificar se o método de assinatura é o esperado
 	token, err := jwt.ParseWithClaims(tokenString, &Claim{}, func(token *jwt.Token) (interface{}, error) {
-		// Verificar se o método de assinatura é o esperado (HS256)
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("método de assinatura inesperado: %v", token.Header["alg"])
 		}

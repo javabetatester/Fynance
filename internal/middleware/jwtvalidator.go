@@ -1,4 +1,3 @@
-// internal/infrastructure/middleware/ownership.go
 package middleware
 
 import (
@@ -84,7 +83,6 @@ func RequireOwnership() gin.HandlerFunc {
 						c.Abort()
 						return
 					}
-					hasValidation = true
 				}
 			}
 		}
