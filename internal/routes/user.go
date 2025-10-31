@@ -18,7 +18,7 @@ func (h *Handler) CreateUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, "user created with success")
+	c.JSON(http.StatusCreated, "User created with success")
 }
 
 func (h *Handler) GetUserByID(c *gin.Context) {
@@ -44,17 +44,25 @@ func (h *Handler) GetUserByEmail(c *gin.Context) {
 }
 
 func (h *Handler) UpdateUser(c *gin.Context) {
-
 	idStr := c.Param("id")
 	id, err := uuid.Parse(idStr)
-
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid UUID"})
 		return
 	}
 
-	var user user.User
+	userIDFromToken, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
 
+	if userIDFromToken.(string) != id.String() {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You can only update your own profile"})
+		return
+	}
+
+	var user user.User
 	if err := c.ShouldBindJSON(&user); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
@@ -71,16 +79,28 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(http.StatusOK, user)
 }
 
 func (h *Handler) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
 
+	userIDFromToken, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	if userIDFromToken.(string) != id {
+		c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own account"})
+		return
+	}
+
 	if err := h.UserService.Delete(id); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "User deleted"})
+	c.JSON(http.StatusNoContent, nil)
 }

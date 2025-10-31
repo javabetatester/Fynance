@@ -9,5 +9,5 @@ import (
 type Handler struct {
 	UserService  user.Service
 	LoginService login.Service
-	JwtService   utils.JwtService
+	JwtService   *utils.JwtService
 }

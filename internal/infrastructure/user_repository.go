@@ -19,12 +19,12 @@ func (r *UserRepository) Update(user *user.User) error {
 }
 
 func (r *UserRepository) Delete(id string) error {
-	return r.DB.Delete(&user.User{}, id).Error
+	return r.DB.Where("id = ?", id).Delete(&user.User{}).Error
 }
 
 func (r *UserRepository) GetById(id string) (*user.User, error) {
 	var user user.User
-	if err := r.DB.First(&user, id).Error; err != nil {
+	if err := r.DB.Where("id = ?", id).First(&user).Error; err != nil {
 		return nil, err
 	}
 	return &user, nil
