@@ -6,4 +6,5 @@ type Repository interface {
 	Delete(id string) error
 	GetById(id string) (*User, error)
 	GetByEmail(email string) (*User, error)
+	
 }
