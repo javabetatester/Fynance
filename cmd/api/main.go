@@ -3,6 +3,7 @@ package main
 import (
 	"Fynance/internal/domain/auth"
 	"Fynance/internal/domain/goal"
+	"Fynance/internal/domain/investment"
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
 	"Fynance/internal/infrastructure"
@@ -15,22 +16,33 @@ import (
 func main() {
 	db := infrastructure.NewDb()
 
+	userRepo := &infrastructure.UserRepository{DB: db}
+	goalRepo := &infrastructure.GoalRepository{DB: db}
+	transactionRepo := &infrastructure.TransactionRepository{DB: db}
+	categoryRepo := &infrastructure.TransactionCategoryRepository{DB: db}
+	investmentRepo := &infrastructure.InvestmentRepository{DB: db}
+
 	userService := user.Service{
-		Repository: &infrastructure.UserRepository{DB: db},
+		Repository: userRepo,
 	}
 
 	authService := auth.Service{
-		Repository:  &infrastructure.UserRepository{DB: db},
+		Repository:  userRepo,
 		UserService: &userService,
 	}
 
 	goalService := goal.Service{
-		Repository: &infrastructure.GoalRepository{DB: db},
+		Repository: goalRepo,
 	}
 
 	transactionService := transaction.Service{
-		Repository:         &infrastructure.TransactionRepository{DB: db},
-		CategoryRepository: &infrastructure.TransactionCategoryRepository{DB: db},
+		Repository:         transactionRepo,
+		CategoryRepository: categoryRepo,
+	}
+
+	investmentService := investment.Service{
+		Repository:      investmentRepo,
+		TransactionRepo: transactionRepo,
 	}
 
 	jwtService := middleware.NewJwtService(&userService)
@@ -41,28 +53,56 @@ func main() {
 		AuthService:        authService,
 		GoalService:        goalService,
 		TransactionService: transactionService,
+		InvestmentService:  investmentService,
 	}
 
 	router := gin.Default()
 
 	public := router.Group("/api")
 	{
-		public.POST("/login", handler.Authenticate)
-		public.POST("/register", handler.Registration)
+		public.POST("/auth/login", handler.Authenticate)
+		public.POST("/auth/register", handler.Registration)
 	}
 
 	private := router.Group("/api")
 	private.Use(middleware.AuthMiddleware(jwtService))
 	private.Use(middleware.RequireOwnership())
 	{
-		private.GET("/users/:id", handler.GetUserByID)
-		private.GET("/users/email", handler.GetUserByEmail)
-		private.PUT("/users/:id", handler.UpdateUser)
-		private.DELETE("/users/:id", handler.DeleteUser)
-		private.POST("/goal/create", handler.CreateGoal)
-		private.POST("/transaction/create", handler.CreateTransaction)
-		private.POST("/transaction/category/create", handler.CreateCategory)
-		private.GET("/transaction/list", handler.GetTransactions)
+		users := private.Group("/users")
+		{
+			users.GET("/:id", handler.GetUserByID)
+			users.GET("/email", handler.GetUserByEmail)
+			users.PUT("/:id", handler.UpdateUser)
+			users.DELETE("/:id", handler.DeleteUser)
+		}
+
+		goals := private.Group("/goals")
+		{
+			goals.POST("", handler.CreateGoal)
+		}
+
+		transactions := private.Group("/transactions")
+		{
+			transactions.POST("", handler.CreateTransaction)
+			transactions.GET("", handler.GetTransactions)
+		}
+
+		categories := private.Group("/categories")
+		{
+			categories.POST("", handler.CreateCategory)
+		}
+
+		investments := private.Group("/investments")
+		{
+			investments.POST("", handler.CreateInvestment)
+			investments.GET("", handler.ListInvestments)
+			investments.GET("/:id", handler.GetInvestment)
+			investments.POST("/:id/contribution", handler.MakeContribution)
+			investments.POST("/:id/withdrawal", handler.MakeWithdrawal)
+			investments.GET("/:id/return", handler.GetInvestmentReturn)
+			investments.DELETE("/:id", handler.DeleteInvestment)
+		}
 	}
+
 	router.Run(":8080")
 }
