@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"os"
 	"time"
 
@@ -79,28 +78,22 @@ func (s *JwtService) ValidateToken(tokenString string) bool {
 func (s *JwtService) ParseToken(tokenString string) (*Claim, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claim{}, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("método de assinatura inesperado: %v", token.Header["alg"])
+			return nil, jwt.NewValidationError("método de assinatura inválido", jwt.ValidationErrorSignatureInvalid)
 		}
 		return []byte(s.secretKey), nil
 	})
 
 	if err != nil {
-		fmt.Printf("Erro ao analisar token: %v\n", err)
 		return nil, err
 	}
 
 	claims, ok := token.Claims.(*Claim)
-	if !ok {
-		return nil, fmt.Errorf("Não foi possível extrair as claims do token")
-	}
-
-	if !token.Valid {
-		return nil, fmt.Errorf("Token inválido")
+	if !ok || !token.Valid {
+		return nil, jwt.NewValidationError("token inválido", jwt.ValidationErrorClaimsInvalid)
 	}
 
 	if claims.ExpiresAt < time.Now().Unix() {
-		return nil, fmt.Errorf("Token expirado: expirou em %v, agora é %v",
-			time.Unix(claims.ExpiresAt, 0), time.Now())
+		return nil, jwt.NewValidationError("token expirado", jwt.ValidationErrorExpired)
 	}
 
 	return claims, nil
