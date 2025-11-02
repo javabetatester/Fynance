@@ -9,7 +9,7 @@ import (
 	"errors"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 )
 
 type Handler struct {
@@ -20,16 +20,15 @@ type Handler struct {
 	GoalService        goal.Service
 }
 
-func (h *Handler) GetUserIDFromContext(c *gin.Context) (uuid.UUID, error) {
+func (h *Handler) GetUserIDFromContext(c *gin.Context) (ulid.ULID, error) {
 	userIDStr, exists := c.Get("user_id")
 	if !exists {
-		return uuid.Nil, errors.New("user not authenticated")
+		return ulid.ULID{}, errors.New("user not authenticated")
 	}
 
-	// Se o claims.Sub já é string UUID
-	userID, err := uuid.Parse(userIDStr.(string))
+	userID, err := ulid.Parse(userIDStr.(string))
 	if err != nil {
-		return uuid.Nil, errors.New("invalid user ID format")
+		return ulid.ULID{}, errors.New("invalid user ID format")
 	}
 
 	return userID, nil

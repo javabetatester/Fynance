@@ -19,7 +19,7 @@ func (h *Handler) CreateCategory(c *gin.Context) {
 		return
 	}
 
-	category.UserId = userID
+	category.UserId = userID.String()
 
 	if err := h.TransactionService.CreateCategory(&category); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

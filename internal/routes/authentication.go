@@ -4,7 +4,9 @@ import (
 	"Fynance/internal/domain/auth"
 	"Fynance/internal/domain/user"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
+	"github.com/oklog/ulid/v2"
 )
 
 func (h *Handler) Authenticate(c *gin.Context) {
@@ -20,7 +22,13 @@ func (h *Handler) Authenticate(c *gin.Context) {
 		return
 	}
 
-	token, err := h.JwtService.GenerateToken(user.Id)
+	userID, err := ulid.Parse(user.Id)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+
+	token, err := h.JwtService.GenerateToken(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

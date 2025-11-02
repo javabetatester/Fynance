@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 )
 
 type CreateTransactionRequest struct {
 	Type        transaction.Types `json:"type" binding:"required"`
-	CategoryId  uuid.UUID         `json:"category_id" binding:"required"`
+	CategoryId  ulid.ULID         `json:"category_id" binding:"required"`
 	Amount      float64           `json:"amount" binding:"required,gt=0"`
 	Description string            `json:"description"`
 	Date        time.Time         `json:"date" binding:"required"`
@@ -32,10 +32,10 @@ func (h *Handler) CreateTransaction(c *gin.Context) {
 	}
 
 	transaction := transaction.Transaction{
-		Id:          uuid.New(),
-		UserId:      userID,
+		Id:          ulid.Make().String(),
+		UserId:      userID.String(),
 		Type:        req.Type,
-		CategoryId:  req.CategoryId,
+		CategoryId:  req.CategoryId.String(),
 		Amount:      req.Amount,
 		Description: req.Description,
 		Date:        req.Date,
