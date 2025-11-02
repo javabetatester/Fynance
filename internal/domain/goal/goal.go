@@ -7,13 +7,14 @@ import (
 )
 
 type Goal struct {
-	Id            int
-	UserId        uuid.UUID
-	Name          string
-	TargetAmount  float64
-	CurrentAmount float64
+	Id            uuid.UUID `gorm:"primaryKey"`
+	UserId        uuid.UUID `gorm:"type:uuid;index;not null"`
+	Name          string    `gorm:"not null"`
+	TargetAmount  float64   `gorm:"not null"`
+	CurrentAmount float64   `gorm:"not null"`
 	StartedAt     time.Time
 	EndedAt       time.Time
-	Status        GoalStatus
+	Status        GoalStatus `gorm:"not null"`
 	CreatedAt     time.Time
+	UpdatedAt     time.Time
 }
