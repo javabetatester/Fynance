@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"Fynance/internal/domain/user"
 
+	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
 )
 
@@ -36,4 +37,15 @@ func (r *UserRepository) GetByEmail(email string) (*user.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *UserRepository) GetPlan(id ulid.ULID) (user.Plan, error) {
+	var u user.User
+
+	err := r.DB.Select("plan").Where("id = ?", id).First(&u).Error
+	if err != nil {
+		return "", err
+	}
+
+	return u.Plan, nil
 }

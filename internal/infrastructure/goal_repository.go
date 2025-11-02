@@ -3,7 +3,7 @@ package infrastructure
 import (
 	"Fynance/internal/domain/goal"
 
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
 )
 
@@ -15,11 +15,11 @@ func (r *GoalRepository) Create(g *goal.Goal) error {
 	return r.DB.Create(&g).Error
 }
 
-func (r *GoalRepository) Delete(id uuid.UUID) error {
+func (r *GoalRepository) Delete(id ulid.ULID) error {
 	return r.DB.Delete(&goal.Goal{}, id).Error
 }
 
-func (r *GoalRepository) GetById(id uuid.UUID) (*goal.Goal, error) {
+func (r *GoalRepository) GetById(id ulid.ULID) (*goal.Goal, error) {
 	var g goal.Goal
 	if err := r.DB.First(&g, id).Error; err != nil {
 		return nil, err
@@ -27,7 +27,7 @@ func (r *GoalRepository) GetById(id uuid.UUID) (*goal.Goal, error) {
 	return &g, nil
 }
 
-func (r *GoalRepository) GetByUserId(userID uuid.UUID) ([]*goal.Goal, error) {
+func (r *GoalRepository) GetByUserId(userID ulid.ULID) ([]*goal.Goal, error) {
 	var goals []*goal.Goal
 	if err := r.DB.Where("user_id = ?", userID).Find(&goals).Error; err != nil {
 		return nil, err

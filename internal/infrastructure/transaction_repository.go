@@ -2,8 +2,8 @@ package infrastructure
 
 import (
 	"Fynance/internal/domain/transaction"
-	"github.com/google/uuid"
 
+	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
 )
 
@@ -19,17 +19,17 @@ func (r *TransactionRepository) Update(transaction *transaction.Transaction) err
 	return r.DB.Save(&transaction).Error
 }
 
-func (r *TransactionRepository) Delete(transactionID uuid.UUID) error {
+func (r *TransactionRepository) Delete(transactionID ulid.ULID) error {
 	return r.DB.Delete(&transaction.Transaction{}, transactionID).Error
 }
 
-func (r *TransactionRepository) GetByID(transactionID uuid.UUID) (*transaction.Transaction, error) {
+func (r *TransactionRepository) GetByID(transactionID ulid.ULID) (*transaction.Transaction, error) {
 	var transaction transaction.Transaction
 	err := r.DB.First(&transaction, transactionID).Error
 	return &transaction, err
 }
 
-func (r *TransactionRepository) GetAll(userID uuid.UUID) ([]*transaction.Transaction, error) {
+func (r *TransactionRepository) GetAll(userID ulid.ULID) ([]*transaction.Transaction, error) {
 	var transactions []*transaction.Transaction
 	err := r.DB.Where("user_id = ?", userID).Find(&transactions).Error
 	return transactions, err
@@ -47,8 +47,14 @@ func (r *TransactionRepository) GetByName(name string) ([]*transaction.Transacti
 	return transactions, err
 }
 
-func (r *TransactionRepository) GetByCategory(userID uuid.UUID, categoryID uuid.UUID) ([]*transaction.Transaction, error) {
+func (r *TransactionRepository) GetByCategory(userID ulid.ULID, categoryID ulid.ULID) ([]*transaction.Transaction, error) {
 	var transactions []*transaction.Transaction
 	err := r.DB.Where("user_id = ? AND category_id = ?", userID, categoryID).Find(&transactions).Error
 	return transactions, err
+}
+
+func (r *TransactionRepository) GetNumberOfTransactions(userID ulid.ULID) (int64, error) {
+	var count int64
+	err := r.DB.Model(&transaction.Transaction{}).Where("user_id = ?", userID).Count(&count).Error
+	return count, err
 }
