@@ -1,7 +1,9 @@
 package main
 
 import (
-	login "Fynance/internal/domain/auth"
+	"Fynance/internal/domain/auth"
+	"Fynance/internal/domain/goal"
+	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
 	"Fynance/internal/infrastructure"
 	"Fynance/internal/middleware"
@@ -18,24 +20,35 @@ func main() {
 		Repository: &infrastructure.UserRepository{DB: db},
 	}
 
-	loginService := login.Service{
+	authService := auth.Service{
 		Repository: &infrastructure.UserRepository{DB: db},
+	}
+
+	goalService := goal.Service{
+		Repository: &infrastructure.GoalRepository{DB: db},
+	}
+
+	transactionService := transaction.Service{
+		Repository:         &infrastructure.TransactionRepository{DB: db},
+		CategoryRepository: &infrastructure.TransactionCategoryRepository{DB: db},
 	}
 
 	jwtService := utils.NewJwtService()
 
 	handler := routes.Handler{
-		UserService:  userService,
-		JwtService:   jwtService,
-		LoginService: loginService,
+		UserService:        userService,
+		JwtService:         jwtService,
+		AuthService:        authService,
+		GoalService:        goalService,
+		TransactionService: transactionService,
 	}
 
 	router := gin.Default()
 
 	public := router.Group("/api")
 	{
-		public.POST("/login", handler.Login)
-		public.POST("/users", handler.CreateUser)
+		public.POST("/login", handler.Authenticate)
+		public.POST("/register", handler.Registration)
 	}
 
 	private := router.Group("/api")
@@ -46,7 +59,10 @@ func main() {
 		private.GET("/users/email", handler.GetUserByEmail)
 		private.PUT("/users/:id", handler.UpdateUser)
 		private.DELETE("/users/:id", handler.DeleteUser)
+		private.POST("/goal/create", handler.CreateGoal)
+		private.POST("/transaction/create", handler.CreateTransaction)
+		private.POST("/transaction/category/create", handler.CreateCategory)
+		private.GET("/transaction/list", handler.GetTransactions)
 	}
-
 	router.Run(":8080")
 }
