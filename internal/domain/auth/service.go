@@ -1,4 +1,4 @@
-package login
+package auth
 
 import (
 	"Fynance/internal/domain/user"
@@ -12,6 +12,9 @@ type Service struct {
 }
 
 func (s *Service) Login(login Login) (*user.User, error) {
+	if !s.UserExists(login.Email) {
+		return nil, errors.New("account does not exist")
+	}
 
 	user, err := s.Repository.GetByEmail(login.Email)
 	if err != nil {
@@ -26,6 +29,19 @@ func (s *Service) Login(login Login) (*user.User, error) {
 	return user, nil
 }
 
+func (s *Service) Register(user *user.User) error {
+	if s.UserExists(user.Email) {
+		return errors.New("email already registered")
+	}
+
+	err := s.Repository.Create(user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (s *Service) GetByEmail(email string) (*user.User, error) {
 	user, err := s.Repository.GetByEmail(email)
 	if err != nil {
@@ -33,4 +49,9 @@ func (s *Service) GetByEmail(email string) (*user.User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *Service) UserExists(email string) bool {
+	_, err := s.Repository.GetByEmail(email)
+	return err == nil
 }
