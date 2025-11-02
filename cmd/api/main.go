@@ -21,7 +21,8 @@ func main() {
 	}
 
 	authService := auth.Service{
-		Repository: &infrastructure.UserRepository{DB: db},
+		Repository:  &infrastructure.UserRepository{DB: db},
+		UserService: &userService,
 	}
 
 	goalService := goal.Service{
@@ -33,7 +34,7 @@ func main() {
 		CategoryRepository: &infrastructure.TransactionCategoryRepository{DB: db},
 	}
 
-	jwtService := utils.NewJwtService()
+	jwtService := utils.NewJwtService(&userService)
 
 	handler := routes.Handler{
 		UserService:        userService,
