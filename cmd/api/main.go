@@ -8,7 +8,6 @@ import (
 	"Fynance/internal/infrastructure"
 	"Fynance/internal/middleware"
 	"Fynance/internal/routes"
-	"Fynance/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,7 +33,7 @@ func main() {
 		CategoryRepository: &infrastructure.TransactionCategoryRepository{DB: db},
 	}
 
-	jwtService := utils.NewJwtService(&userService)
+	jwtService := middleware.NewJwtService(&userService)
 
 	handler := routes.Handler{
 		UserService:        userService,
