@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -23,16 +22,16 @@ func RequireOwnership() gin.HandlerFunc {
 
 		hasValidation := false
 
-		idFromURL := c.Param("id")
-		if idFromURL != "" {
+		// idFromURL := c.Param("id")
+		// if idFromURL != "" {
 
-			if !strings.EqualFold(tokenUserID, idFromURL) {
-				c.JSON(http.StatusForbidden, gin.H{"error": "You can only access your own resources"})
-				c.Abort()
-				return
-			}
-			hasValidation = true
-		}
+		// 	if !strings.EqualFold(tokenUserID, idFromURL) {
+		// 		c.JSON(http.StatusForbidden, gin.H{"error": "You can only access your own resources"})
+		// 		c.Abort()
+		// 		return
+		// 	}
+		// 	hasValidation = true
+		// }
 
 		if c.Request.Body != nil {
 			bodyBytes, err := io.ReadAll(c.Request.Body)
