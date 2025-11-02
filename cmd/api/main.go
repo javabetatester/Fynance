@@ -98,7 +98,7 @@ func main() {
 			investments.GET("", handler.ListInvestments)
 			investments.GET("/:id", handler.GetInvestment)
 			investments.POST("/:id/contribution", handler.MakeContribution)
-			investments.POST("/:id/withdrawal", handler.MakeWithdrawal)
+			investments.POST("/:id/withdraw", handler.MakeWithdraw)
 			investments.GET("/:id/return", handler.GetInvestmentReturn)
 			investments.DELETE("/:id", handler.DeleteInvestment)
 		}
