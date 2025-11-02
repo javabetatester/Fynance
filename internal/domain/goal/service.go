@@ -1,7 +1,7 @@
 package goal
 
 import (
-	"time"
+	"Fynance/internal/utils"
 
 	"github.com/oklog/ulid/v2"
 )
@@ -11,11 +11,10 @@ type Service struct {
 }
 
 func (s *Service) CreateGoal(goal *Goal) error {
-
-	entropy := ulid.DefaultEntropy()
-	goal.Id = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
-	goal.CreatedAt = time.Now()
-	goal.UpdatedAt = time.Now()
+	goal.Id = utils.GenerateULID()
+	now := utils.SetTimestamps()
+	goal.CreatedAt = now
+	goal.UpdatedAt = now
 	return s.Repository.Create(goal)
 }
 

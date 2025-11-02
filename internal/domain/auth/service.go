@@ -39,7 +39,6 @@ func (s *Service) Register(user *user.User) error {
 		return err
 	}
 
-	// Use UserService.Create instead of Repository.Create to ensure ID generation
 	if err := s.UserService.Create(user); err != nil {
 		return err
 	}
@@ -57,7 +56,7 @@ func (s *Service) GetByEmail(email string) (*user.User, error) {
 }
 
 func (s *Service) UserExists(email string) bool {
-	_, err := s.Repository.GetByEmail(email)
+	_, err := s.GetByEmail(email)
 	return err == nil
 }
 

@@ -1,7 +1,7 @@
 package user
 
 import (
-	"time"
+	"Fynance/internal/utils"
 
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -12,10 +12,9 @@ type Service struct {
 }
 
 func (s *Service) Create(user *User) error {
-	entropy := ulid.DefaultEntropy()
-	user.Id = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
+	user.Id = utils.GenerateULID()
 
-	now := time.Now()
+	now := utils.SetTimestamps()
 	user.CreatedAt = now
 	user.UpdatedAt = now
 

@@ -1,8 +1,8 @@
 package transaction
 
 import (
+	"Fynance/internal/utils"
 	"errors"
-	"time"
 
 	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
@@ -14,14 +14,14 @@ type Service struct {
 }
 
 func (s *Service) CreateTransaction(transaction *Transaction) error {
-	categoryID, err := ulid.Parse(transaction.CategoryId)
+	categoryID, err := utils.ParseULID(transaction.CategoryId)
 	if err != nil {
-		return errors.New("invalid category ID format")
+		return err
 	}
 
-	userID, err := ulid.Parse(transaction.UserId)
+	userID, err := utils.ParseULID(transaction.UserId)
 	if err != nil {
-		return errors.New("invalid user ID format")
+		return err
 	}
 
 	_, err = s.CategoryRepository.GetByID(categoryID, userID)
@@ -34,10 +34,11 @@ func (s *Service) CreateTransaction(transaction *Transaction) error {
 		return err
 	}
 
-	entropy := ulid.DefaultEntropy()
-	transaction.Id = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
-	transaction.CreatedAt = time.Now()
-	transaction.UpdatedAt = time.Now()
+	// Generate ID for the transaction
+	transaction.Id = utils.GenerateULID()
+	now := utils.SetTimestamps()
+	transaction.CreatedAt = now
+	transaction.UpdatedAt = now
 
 	return s.Repository.Create(transaction)
 }
@@ -72,17 +73,16 @@ func (s *Service) GetTransactionsByCategory(categoryID ulid.ULID, userID ulid.UL
 
 // CATEGORYS
 func (s *Service) CreateCategory(category *Category) error {
-	userID, err := ulid.Parse(category.UserId)
+	userID, err := utils.ParseULID(category.UserId)
 	if err != nil {
-		return errors.New("invalid user ID format")
+		return err
 	}
 
 	if err := s.CategoryExists(category.Name, userID); err != nil {
 		return err
 	}
 
-	entropy := ulid.DefaultEntropy()
-	category.Id = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
+	category.Id = utils.GenerateULID()
 
 	return s.CategoryRepository.Create(category)
 }
