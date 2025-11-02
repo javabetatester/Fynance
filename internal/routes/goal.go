@@ -19,7 +19,7 @@ func (h *Handler) CreateGoal(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-	goal.UserId = userID
+	goal.UserId = userID.String()
 
 	if err := h.GoalService.CreateGoal(&goal); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

@@ -1,12 +1,12 @@
 package goal
 
-import "github.com/google/uuid"
+import "github.com/oklog/ulid/v2"
 
 type Repository interface {
 	Create(goal *Goal) error
 	List() ([]*Goal, error)
 	Update(goal *Goal) error
-	Delete(id uuid.UUID) error
-	GetById(id uuid.UUID) (*Goal, error)
-	GetByUserId(userId uuid.UUID) ([]*Goal, error)
+	Delete(id ulid.ULID) error
+	GetById(id ulid.ULID) (*Goal, error)
+	GetByUserId(userId ulid.ULID) ([]*Goal, error)
 }
