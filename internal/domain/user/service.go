@@ -3,7 +3,7 @@ package user
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -12,7 +12,8 @@ type Service struct {
 }
 
 func (s *Service) Create(user *User) error {
-	user.Id = uuid.New()
+	entropy := ulid.DefaultEntropy()
+	user.Id = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
 
 	now := time.Now()
 	user.CreatedAt = now
@@ -41,4 +42,12 @@ func (s *Service) GetByID(id string) (*User, error) {
 
 func (s *Service) GetByEmail(email string) (*User, error) {
 	return s.Repository.GetByEmail(email)
+}
+
+func (s *Service) GetPlan(id ulid.ULID) (Plan, error) {
+	plan, err := s.Repository.GetPlan(id)
+	if err != nil {
+		return "", err
+	}
+	return plan, nil
 }
