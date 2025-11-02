@@ -14,7 +14,7 @@ type Goal struct {
 	CurrentAmount float64   `gorm:"not null"`
 	StartedAt     time.Time
 	EndedAt       time.Time
-	Status        GoalStatus `gorm:"not null"`
+	Status        GoalStatus `gorm:"default:'ACTIVE'"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
 }

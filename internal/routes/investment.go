@@ -6,11 +6,23 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/oklog/ulid/v2"
 )
 
 func (h *Handler) CreateInvestment(c *gin.Context) {
-	var req investment.CreateInvestmentRequest
-	if err := c.ShouldBindJSON(&req); err != nil {
+	type bodyDTO struct {
+		Type             investment.Types `json:"type" binding:"required"`
+		Name             string           `json:"name" binding:"required"`
+		InitialAmount    float64          `json:"initial_amount"`
+		InitialAmountAlt float64          `json:"initialAmount"`
+		ReturnRate       float64          `json:"return_rate"`
+		ReturnRateAlt    float64          `json:"returnRate"`
+		CategoryId       string           `json:"category_id"`
+		CategoryIdAlt    string           `json:"categoryId"`
+	}
+
+	var body bodyDTO
+	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
@@ -21,7 +33,51 @@ func (h *Handler) CreateInvestment(c *gin.Context) {
 		return
 	}
 
-	req.UserId = userID
+	initial := body.InitialAmount
+	if initial == 0 && body.InitialAmountAlt != 0 {
+		initial = body.InitialAmountAlt
+	}
+	if initial <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "initial amount must be greater than 0"})
+		return
+	}
+
+	ret := body.ReturnRate
+	if ret == 0 && body.ReturnRateAlt != 0 {
+		ret = body.ReturnRateAlt
+	}
+
+	catIDStr := body.CategoryId
+	if catIDStr == "" {
+		catIDStr = body.CategoryIdAlt
+	}
+	var categoryID ulid.ULID
+	if catIDStr == "" {
+		categoryID, err = h.TransactionService.EnsureDefaultInvestmentCategory(userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+	} else {
+		categoryID, err = utils.ParseULID(catIDStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid category id"})
+			return
+		}
+		if errs := h.TransactionService.CategoryValidation(categoryID, userID); errs != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": errs.Error()})
+			return
+		}
+	}
+
+	req := investment.CreateInvestmentRequest{
+		UserId:        userID,
+		Type:          body.Type,
+		Name:          body.Name,
+		InitialAmount: initial,
+		ReturnRate:    ret,
+		CategoryId:    categoryID,
+	}
 
 	inv, err := h.InvestmentService.CreateInvestment(req)
 	if err != nil {
@@ -97,6 +153,11 @@ func (h *Handler) MakeContribution(c *gin.Context) {
 		return
 	}
 
+	// if errs := h.TransactionService.CategoryValidation(req.CategoryId, userID); errs != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": errs.Error()})
+	// 	return
+	// }
+
 	err = h.InvestmentService.MakeContribution(investmentID, userID, req.Amount, req.CategoryId, req.Description)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
@@ -108,7 +169,7 @@ func (h *Handler) MakeContribution(c *gin.Context) {
 	})
 }
 
-func (h *Handler) MakeWithdrawal(c *gin.Context) {
+func (h *Handler) MakeWithdraw(c *gin.Context) {
 	investmentID, err := utils.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid investment id"})
@@ -127,14 +188,19 @@ func (h *Handler) MakeWithdrawal(c *gin.Context) {
 		return
 	}
 
-	err = h.InvestmentService.MakeWithdrawal(investmentID, userID, req.Amount, req.CategoryId, req.Description)
+	// if errs := h.TransactionService.CategoryValidation(req.CategoryId, userID); errs != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": errs.Error()})
+	// 	return
+	// }
+
+	err = h.InvestmentService.MakeWithdraw(investmentID, userID, req.Amount, req.CategoryId, req.Description)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Withdrawal made successfully",
+		"message": "Withdraw made successfully",
 	})
 }
 

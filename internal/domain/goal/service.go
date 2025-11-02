@@ -2,6 +2,7 @@ package goal
 
 import (
 	"Fynance/internal/utils"
+	"fmt"
 
 	"github.com/oklog/ulid/v2"
 )
@@ -15,6 +16,8 @@ func (s *Service) CreateGoal(goal *Goal) error {
     now := utils.SetTimestamps()
     goal.CreatedAt = now
     goal.UpdatedAt = now
+	fmt.Println("CurrentAmount", goal.CurrentAmount)
+	fmt.Println("TargetAmount", goal.TargetAmount)
     return s.Repository.Create(goal)
 }
 
