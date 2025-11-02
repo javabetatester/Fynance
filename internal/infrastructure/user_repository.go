@@ -42,7 +42,7 @@ func (r *UserRepository) GetByEmail(email string) (*user.User, error) {
 func (r *UserRepository) GetPlan(id ulid.ULID) (user.Plan, error) {
 	var u user.User
 
-	err := r.DB.Select("plan").Where("id = ?", id).First(&u).Error
+	err := r.DB.Select("plan").Where("id = ?", id.String()).First(&u).Error
 	if err != nil {
 		return "", err
 	}

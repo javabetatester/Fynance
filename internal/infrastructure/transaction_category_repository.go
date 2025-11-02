@@ -20,35 +20,35 @@ func (r *TransactionCategoryRepository) Update(category *transaction.Category) e
 }
 
 func (r *TransactionCategoryRepository) Delete(categoryID ulid.ULID, userID ulid.ULID) error {
-	return r.DB.Where("id = ? AND user_id = ?", categoryID, userID).Delete(&transaction.Category{}).Error
+	return r.DB.Where("id = ? AND user_id = ?", categoryID.String(), userID.String()).Delete(&transaction.Category{}).Error
 }
 
 func (r *TransactionCategoryRepository) GetByID(categoryID ulid.ULID, userID ulid.ULID) (*transaction.Category, error) {
 	var category transaction.Category
-	err := r.DB.Where("id = ? AND user_id = ?", categoryID, userID).First(&category).Error
+	err := r.DB.Where("id = ? AND user_id = ?", categoryID.String(), userID.String()).First(&category).Error
 	return &category, err
 }
 
 func (r *TransactionCategoryRepository) GetAll(userID ulid.ULID) ([]*transaction.Category, error) {
 	var categories []*transaction.Category
-	err := r.DB.Where("user_id = ?", userID).Find(&categories).Error
+	err := r.DB.Where("user_id = ?", userID.String()).Find(&categories).Error
 	return categories, err
 }
 
 func (r *TransactionCategoryRepository) GetByUserID(userID ulid.ULID) ([]*transaction.Category, error) {
 	var categories []*transaction.Category
-	err := r.DB.Where("user_id = ?", userID).Find(&categories).Error
+	err := r.DB.Where("user_id = ?", userID.String()).Find(&categories).Error
 	return categories, err
 }
 
 func (r *TransactionCategoryRepository) GetByName(CategoryName string, userID ulid.ULID) (*transaction.Category, error) {
 	var category transaction.Category
-	err := r.DB.Where("name = ? AND user_id = ?", CategoryName, userID).First(&category).Error
+	err := r.DB.Where("name = ? AND user_id = ?", CategoryName, userID.String()).First(&category).Error
 	return &category, err
 }
 
 func (r *TransactionCategoryRepository) BelongsToUser(categoryID ulid.ULID, userID ulid.ULID) (bool, error) {
 	var count int64
-	err := r.DB.Model(&transaction.Category{}).Where("id = ? AND user_id = ?", categoryID, userID).Count(&count).Error
+	err := r.DB.Model(&transaction.Category{}).Where("id = ? AND user_id = ?", categoryID.String(), userID.String()).Count(&count).Error
 	return count > 0, err
 }

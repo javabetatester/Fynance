@@ -16,12 +16,12 @@ func (r *GoalRepository) Create(g *goal.Goal) error {
 }
 
 func (r *GoalRepository) Delete(id ulid.ULID) error {
-	return r.DB.Delete(&goal.Goal{}, id).Error
+	return r.DB.Delete(&goal.Goal{}, id.String()).Error
 }
 
 func (r *GoalRepository) GetById(id ulid.ULID) (*goal.Goal, error) {
 	var g goal.Goal
-	if err := r.DB.First(&g, id).Error; err != nil {
+	if err := r.DB.First(&g, id.String()).Error; err != nil {
 		return nil, err
 	}
 	return &g, nil
@@ -29,7 +29,7 @@ func (r *GoalRepository) GetById(id ulid.ULID) (*goal.Goal, error) {
 
 func (r *GoalRepository) GetByUserId(userID ulid.ULID) ([]*goal.Goal, error) {
 	var goals []*goal.Goal
-	if err := r.DB.Where("user_id = ?", userID).Find(&goals).Error; err != nil {
+	if err := r.DB.Where("user_id = ?", userID.String()).Find(&goals).Error; err != nil {
 		return nil, err
 	}
 	return goals, nil
