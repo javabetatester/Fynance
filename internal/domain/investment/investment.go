@@ -3,12 +3,12 @@ package investment
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 )
 
 type Investment struct {
-	Id              int       `gorm:"primaryKey;autoIncrement"`
-	UserId          uuid.UUID `gorm:"type:uuid;index;not null"`
+	Id              ulid.ULID `gorm:"type:varchar(26);primaryKey;serializer:json"`
+	UserId          ulid.ULID `gorm:"type:varchar(26);index;not null;serializer:json"`
 	Type            Types     `gorm:"not null"`
 	Name            string    `gorm:"size:100;not null"`
 	TotalAmount     float64   `gorm:"not null"`

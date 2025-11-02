@@ -1,6 +1,6 @@
 package investment
 
-import "github.com/google/uuid"
+import "github.com/oklog/ulid/v2"
 
 type Repository interface {
 	Create(investment *Investment) error
@@ -8,5 +8,5 @@ type Repository interface {
 	Update(investment *Investment) error
 	Delete(id int) error
 	GetById(id int) (*Investment, error)
-	GetByUserId(userId uuid.UUID) ([]*Investment, error)
+	GetByUserId(userId ulid.ULID) ([]*Investment, error)
 }
