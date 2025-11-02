@@ -2,6 +2,7 @@ package routes
 
 import (
 	"Fynance/internal/domain/goal"
+	"Fynance/internal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -19,7 +20,7 @@ func (h *Handler) CreateGoal(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
 		return
 	}
-	goal.UserId = userID.String()
+	goal.UserId = utils.ULIDToString(userID)
 
 	if err := h.GoalService.CreateGoal(&goal); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

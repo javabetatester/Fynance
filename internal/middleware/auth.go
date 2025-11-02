@@ -1,14 +1,13 @@
 package middleware
 
 import (
-	"Fynance/internal/utils"
 	"net/http"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(jwtService *utils.JwtService) gin.HandlerFunc {
+func AuthMiddleware(jwtService *JwtService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {

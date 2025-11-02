@@ -3,10 +3,10 @@ package routes
 import (
 	"Fynance/internal/domain/auth"
 	"Fynance/internal/domain/user"
+	"Fynance/internal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/oklog/ulid/v2"
 )
 
 func (h *Handler) Authenticate(c *gin.Context) {
@@ -22,9 +22,9 @@ func (h *Handler) Authenticate(c *gin.Context) {
 		return
 	}
 
-	userID, err := ulid.Parse(user.Id)
+	userID, err := utils.ParseULID(user.Id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID format"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

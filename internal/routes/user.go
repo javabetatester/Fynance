@@ -2,10 +2,10 @@ package routes
 
 import (
 	"Fynance/internal/domain/user"
+	"Fynance/internal/utils"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/oklog/ulid/v2"
 )
 
 func (h *Handler) CreateUser(c *gin.Context) {
@@ -45,9 +45,9 @@ func (h *Handler) GetUserByEmail(c *gin.Context) {
 
 func (h *Handler) UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := ulid.Parse(idStr)
+	id, err := utils.ParseULID(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ULID"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -85,9 +85,9 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 
 func (h *Handler) DeleteUser(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := ulid.Parse(idStr)
+	id, err := utils.ParseULID(idStr)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid ULID format"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 

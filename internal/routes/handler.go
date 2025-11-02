@@ -5,6 +5,7 @@ import (
 	"Fynance/internal/domain/goal"
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
+	"Fynance/internal/middleware"
 	"Fynance/internal/utils"
 	"errors"
 
@@ -15,7 +16,7 @@ import (
 type Handler struct {
 	UserService        user.Service
 	AuthService        auth.Service
-	JwtService         *utils.JwtService
+	JwtService         *middleware.JwtService
 	TransactionService transaction.Service
 	GoalService        goal.Service
 }
@@ -26,9 +27,9 @@ func (h *Handler) GetUserIDFromContext(c *gin.Context) (ulid.ULID, error) {
 		return ulid.ULID{}, errors.New("user not authenticated")
 	}
 
-	userID, err := ulid.Parse(userIDStr.(string))
+	userID, err := utils.ParseULID(userIDStr.(string))
 	if err != nil {
-		return ulid.ULID{}, errors.New("invalid user ID format")
+		return ulid.ULID{}, err
 	}
 
 	return userID, nil
