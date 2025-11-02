@@ -1,6 +1,9 @@
 package infrastructure
 
 import (
+	"Fynance/internal/domain/goal"
+	"Fynance/internal/domain/investment"
+	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
 	"log"
 
@@ -15,7 +18,13 @@ func NewDb() *gorm.DB {
 		panic("fail to connect to database")
 	}
 
-	err = db.AutoMigrate(&user.User{})
+	err = db.AutoMigrate(
+		&user.User{},
+		&transaction.Transaction{},
+		&transaction.Category{},
+		&investment.Investment{},
+		&goal.Goal{},
+	)
 	if err != nil {
 		log.Printf("Erro no AutoMigrate: %v", err)
 		panic("fail to migrate database")
