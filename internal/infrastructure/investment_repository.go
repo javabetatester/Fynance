@@ -19,6 +19,7 @@ type investmentDB struct {
 	Type            string    `gorm:"type:varchar(20);not null"`
 	Name            string    `gorm:"size:100;not null"`
 	CurrentBalance  float64   `gorm:"not null;default:0"`
+	ReturnBalance   float64   `gorm:"not null;default:0"`
 	ReturnRate      float64   `gorm:"default:0"`
 	ApplicationDate time.Time `gorm:"not null"`
 	CreatedAt       time.Time
@@ -40,6 +41,7 @@ func toDomainInvestment(idb *investmentDB) (*investment.Investment, error) {
 		Type:            investment.Types(idb.Type),
 		Name:            idb.Name,
 		CurrentBalance:  idb.CurrentBalance,
+		ReturnBalance:   idb.ReturnBalance,
 		ReturnRate:      idb.ReturnRate,
 		ApplicationDate: idb.ApplicationDate,
 		CreatedAt:       idb.CreatedAt,
@@ -54,6 +56,7 @@ func toDBInvestment(inv *investment.Investment) *investmentDB {
 		Type:            string(inv.Type),
 		Name:            inv.Name,
 		CurrentBalance:  inv.CurrentBalance,
+		ReturnBalance:   inv.ReturnBalance,
 		ReturnRate:      inv.ReturnRate,
 		ApplicationDate: inv.ApplicationDate,
 		CreatedAt:       inv.CreatedAt,

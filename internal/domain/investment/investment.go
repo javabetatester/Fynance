@@ -12,6 +12,7 @@ type Investment struct {
 	Type            Types     `gorm:"type:varchar(20);not null" json:"type"`
 	Name            string    `gorm:"size:100;not null" json:"name"`
 	CurrentBalance  float64   `gorm:"not null;" json:"current_balance"`
+	ReturnBalance   float64   `gorm:"not null;" json:"return_balance"`
 	ReturnRate      float64   `gorm:"default:0" json:"return_rate"`
 	ApplicationDate time.Time `gorm:"not null"`
 	CreatedAt       time.Time `json:"created_at"`
