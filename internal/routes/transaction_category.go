@@ -2,8 +2,8 @@ package routes
 
 import (
 	"Fynance/internal/domain/transaction"
-	"Fynance/internal/utils"
 	"net/http"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,7 +20,7 @@ func (h *Handler) CreateCategory(c *gin.Context) {
 		return
 	}
 
-	category.UserId = utils.ULIDToString(userID)
+	category.UserId = userID
 
 	if err := h.TransactionService.CreateCategory(&category); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

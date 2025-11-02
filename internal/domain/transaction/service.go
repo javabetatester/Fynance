@@ -14,17 +14,7 @@ type Service struct {
 }
 
 func (s *Service) CreateTransaction(transaction *Transaction) error {
-	categoryID, err := utils.ParseULID(transaction.CategoryId)
-	if err != nil {
-		return err
-	}
-
-	userID, err := utils.ParseULID(transaction.UserId)
-	if err != nil {
-		return err
-	}
-
-	_, err = s.CategoryRepository.GetByID(categoryID, userID)
+	_, err := s.CategoryRepository.GetByID(transaction.CategoryId, transaction.UserId)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return errors.New("category does not exist")
@@ -34,8 +24,7 @@ func (s *Service) CreateTransaction(transaction *Transaction) error {
 		return err
 	}
 
-	// Generate ID for the transaction
-	transaction.Id = utils.GenerateULID()
+	transaction.Id = ulid.MustNew(ulid.Timestamp(utils.SetTimestamps()), ulid.DefaultEntropy())
 	now := utils.SetTimestamps()
 	transaction.CreatedAt = now
 	transaction.UpdatedAt = now
@@ -73,16 +62,11 @@ func (s *Service) GetTransactionsByCategory(categoryID ulid.ULID, userID ulid.UL
 
 // CATEGORYS
 func (s *Service) CreateCategory(category *Category) error {
-	userID, err := utils.ParseULID(category.UserId)
-	if err != nil {
+	if err := s.CategoryExists(category.Name, category.UserId); err != nil {
 		return err
 	}
 
-	if err := s.CategoryExists(category.Name, userID); err != nil {
-		return err
-	}
-
-	category.Id = utils.GenerateULID()
+	category.Id = ulid.MustNew(ulid.Timestamp(utils.SetTimestamps()), ulid.DefaultEntropy())
 
 	return s.CategoryRepository.Create(category)
 }

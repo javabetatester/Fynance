@@ -3,6 +3,7 @@ package routes
 import (
 	"Fynance/internal/domain/auth"
 	"Fynance/internal/domain/goal"
+	"Fynance/internal/domain/investment"
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
 	"Fynance/internal/middleware"
@@ -19,6 +20,7 @@ type Handler struct {
 	JwtService         *middleware.JwtService
 	TransactionService transaction.Service
 	GoalService        goal.Service
+	InvestmentService  investment.Service
 }
 
 func (h *Handler) GetUserIDFromContext(c *gin.Context) (ulid.ULID, error) {

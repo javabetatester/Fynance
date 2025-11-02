@@ -11,11 +11,11 @@ type Service struct {
 }
 
 func (s *Service) CreateGoal(goal *Goal) error {
-	goal.Id = utils.GenerateULID()
-	now := utils.SetTimestamps()
-	goal.CreatedAt = now
-	goal.UpdatedAt = now
-	return s.Repository.Create(goal)
+    goal.Id = utils.GenerateULIDObject()
+    now := utils.SetTimestamps()
+    goal.CreatedAt = now
+    goal.UpdatedAt = now
+    return s.Repository.Create(goal)
 }
 
 func (s *Service) UpdateGoal(goal *Goal) error {

@@ -31,6 +31,5 @@ func NewDb() *gorm.DB {
 	}
 
 	log.Println("AutoMigrate executado com sucesso!")
-
 	return db
 }

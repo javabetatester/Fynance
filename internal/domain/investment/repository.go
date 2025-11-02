@@ -4,9 +4,11 @@ import "github.com/oklog/ulid/v2"
 
 type Repository interface {
 	Create(investment *Investment) error
-	List() ([]*Investment, error)
+	List(userId ulid.ULID) ([]*Investment, error)
 	Update(investment *Investment) error
-	Delete(id int) error
-	GetById(id int) (*Investment, error)
+	Delete(id ulid.ULID, userId ulid.ULID) error
+	GetById(id ulid.ULID, userId ulid.ULID) (*Investment, error)
 	GetByUserId(userId ulid.ULID) ([]*Investment, error)
+	GetTotalBalance(userId ulid.ULID) (float64, error)
+	GetByType(userId ulid.ULID, investmentType Types) ([]*Investment, error)
 }
