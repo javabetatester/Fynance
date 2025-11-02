@@ -115,6 +115,26 @@ func (s *Service) CategoryValidation(categoryId ulid.ULID, userID ulid.ULID) err
 	return nil
 }
 
+func (s *Service) EnsureDefaultInvestmentCategory(userID ulid.ULID) (ulid.ULID, error) {
+	const defaultName = "Investment"
+	cat, err := s.CategoryRepository.GetByName(defaultName, userID)
+	if err == nil {
+		return cat.Id, nil
+	}
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c := &Category{
+			UserId: userID,
+			Name:   defaultName,
+		}
+		c.Id = ulid.MustNew(ulid.Timestamp(utils.SetTimestamps()), ulid.DefaultEntropy())
+		if errs := s.CategoryRepository.Create(c); errs != nil {
+			return ulid.ULID{}, errs
+		}
+		return c.Id, nil
+	}
+	return ulid.ULID{}, err
+}
+
 func (s *Service) GetNumberOfTransactions(userID ulid.ULID) (int64, error) {
 	return s.Repository.GetNumberOfTransactions(userID)
 }
