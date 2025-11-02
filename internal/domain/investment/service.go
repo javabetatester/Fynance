@@ -33,6 +33,8 @@ func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, er
 		CurrentBalance:  req.InitialAmount,
 		ReturnRate:      req.ReturnRate,
 		ApplicationDate: time.Now(),
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
 
 	if err := s.Repository.Create(investment); err != nil {
@@ -61,7 +63,7 @@ func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, er
 }
 
 func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float64, categoryId ulid.ULID, description string) error {
-	investment, err := s.Repository.GetById(investmentId, userId)
+	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
 	if err != nil {
 		return errors.New("investment not found")
 	}
@@ -88,8 +90,8 @@ func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float6
 	return s.Repository.Update(investment)
 }
 
-func (s *Service) MakeWithdrawal(investmentId, userId ulid.ULID, amount float64, categoryId ulid.ULID, description string) error {
-	investment, err := s.Repository.GetById(investmentId, userId)
+func (s *Service) MakeWithdraw(investmentId, userId ulid.ULID, amount float64, categoryId ulid.ULID, description string) error {
+	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
 	if err != nil {
 		return errors.New("investment not found")
 	}
@@ -104,7 +106,7 @@ func (s *Service) MakeWithdrawal(investmentId, userId ulid.ULID, amount float64,
 	trans := &transaction.Transaction{
 		Id:           transId,
 		UserId:       userId,
-		Type:         transaction.Withdrawal,
+		Type:         transaction.Withdraw,
 		CategoryId:   categoryId,
 		Amount:       amount,
 		Description:  description,
@@ -125,7 +127,7 @@ func (s *Service) ListInvestments(userId ulid.ULID) ([]*Investment, error) {
 }
 
 func (s *Service) GetInvestment(investmentId, userId ulid.ULID) (*Investment, error) {
-	return s.Repository.GetById(investmentId, userId)
+	return s.Repository.GetInvestmentById(investmentId, userId)
 }
 
 func (s *Service) GetTotalInvested(investmentId, userId ulid.ULID) (float64, error) {
@@ -139,7 +141,7 @@ func (s *Service) GetTotalInvested(investmentId, userId ulid.ULID) (float64, err
 		switch trans.Type {
 		case transaction.Investment:
 			total += trans.Amount
-		case transaction.Withdrawal:
+		case transaction.Withdraw:
 			total -= trans.Amount
 		}
 	}
@@ -148,7 +150,7 @@ func (s *Service) GetTotalInvested(investmentId, userId ulid.ULID) (float64, err
 }
 
 func (s *Service) CalculateReturn(investmentId, userId ulid.ULID) (float64, float64, error) {
-	investment, err := s.Repository.GetById(investmentId, userId)
+	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -169,7 +171,7 @@ func (s *Service) CalculateReturn(investmentId, userId ulid.ULID) (float64, floa
 }
 
 func (s *Service) DeleteInvestment(investmentId, userId ulid.ULID) error {
-	investment, err := s.Repository.GetById(investmentId, userId)
+	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
 	if err != nil {
 		return err
 	}

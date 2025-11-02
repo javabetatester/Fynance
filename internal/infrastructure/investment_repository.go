@@ -13,7 +13,6 @@ type InvestmentRepository struct {
 	DB *gorm.DB
 }
 
-
 type investmentDB struct {
 	Id              string    `gorm:"type:varchar(26);primaryKey"`
 	UserId          string    `gorm:"type:varchar(26);index;not null"`
@@ -96,7 +95,7 @@ func (r *InvestmentRepository) Delete(id ulid.ULID, userId ulid.ULID) error {
 		Delete(&investmentDB{}).Error
 }
 
-func (r *InvestmentRepository) GetById(id ulid.ULID, userId ulid.ULID) (*investment.Investment, error) {
+func (r *InvestmentRepository) GetInvestmentById(id ulid.ULID, userId ulid.ULID) (*investment.Investment, error) {
 	var row investmentDB
 	err := r.DB.Table("investments").Where("id = ? AND user_id = ?", id.String(), userId.String()).
 		First(&row).Error
