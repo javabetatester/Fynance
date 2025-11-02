@@ -1,19 +1,21 @@
 package utils
 
 import (
+	"Fynance/internal/domain/user"
 	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 )
 
 type JwtService struct {
-	secretKey string
-	issuer    string
+	secretKey   string
+	issuer      string
+	userService *user.Service // ✅ Adicione este campo
 }
 
-func NewJwtService() *JwtService {
+func NewJwtService(userService *user.Service) *JwtService {
 	secretKey := os.Getenv("JWT_SECRET_KEY")
 	if secretKey == "" {
 		secretKey = "fynance_secure_jwt_secret_key_2024"
@@ -25,34 +27,36 @@ func NewJwtService() *JwtService {
 	}
 
 	return &JwtService{
-		secretKey: secretKey,
-		issuer:    issuer,
+		secretKey:   secretKey,
+		issuer:      issuer,
+		userService: userService,
 	}
 }
 
 type Claim struct {
-	Sub string `json:"sub"`
+	Sub  string    `json:"sub"`
+	Plan user.Plan `json:"plan"`
 	jwt.StandardClaims
 }
 
-func (s *JwtService) GenerateToken(id uuid.UUID) (string, error) {
-	claim := &Claim{
-		Sub: id.String(),
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
-			IssuedAt:  time.Now().Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
-
-	t, err := token.SignedString([]byte(s.secretKey))
-
+func (s *JwtService) GenerateToken(id ulid.ULID) (string, error) {
+	plan, err := s.userService.GetPlan(id)
 	if err != nil {
 		return "", err
 	}
 
-	return t, nil
+	claim := &Claim{
+		Sub:  id.String(),
+		Plan: plan,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
+			IssuedAt:  time.Now().Unix(),
+			Issuer:    s.issuer,
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
+	return token.SignedString([]byte(s.secretKey))
 }
 
 func (s *JwtService) ValidateToken(tokenString string) bool {

@@ -33,6 +33,7 @@ func AuthMiddleware(jwtService *utils.JwtService) gin.HandlerFunc {
 		}
 
 		c.Set("user_id", claims.Sub)
+		c.Set("plan", claims.Plan)
 
 		c.Next()
 	}

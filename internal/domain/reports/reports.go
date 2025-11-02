@@ -3,12 +3,12 @@ package reports
 import (
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 )
 
 type Reports struct {
 	Id          int
-	UserId      uuid.UUID
+	UserId      ulid.ULID
 	StartedAt   time.Time
 	EndedAt     time.Time
 	GeneratedAt time.Time

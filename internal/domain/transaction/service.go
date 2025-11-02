@@ -2,8 +2,9 @@ package transaction
 
 import (
 	"errors"
+	"time"
 
-	"github.com/google/uuid"
+	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
 )
 
@@ -13,9 +14,17 @@ type Service struct {
 }
 
 func (s *Service) CreateTransaction(transaction *Transaction) error {
-	transaction.Id = uuid.New()
+	categoryID, err := ulid.Parse(transaction.CategoryId)
+	if err != nil {
+		return errors.New("invalid category ID format")
+	}
 
-	_, err := s.CategoryRepository.GetByID(transaction.CategoryId, transaction.UserId)
+	userID, err := ulid.Parse(transaction.UserId)
+	if err != nil {
+		return errors.New("invalid user ID format")
+	}
+
+	_, err = s.CategoryRepository.GetByID(categoryID, userID)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return errors.New("category does not exist")
@@ -25,6 +34,11 @@ func (s *Service) CreateTransaction(transaction *Transaction) error {
 		return err
 	}
 
+	entropy := ulid.DefaultEntropy()
+	transaction.Id = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
+	transaction.CreatedAt = time.Now()
+	transaction.UpdatedAt = time.Now()
+
 	return s.Repository.Create(transaction)
 }
 
@@ -32,15 +46,15 @@ func (s *Service) UpdateTransaction(transaction *Transaction) error {
 	return s.Repository.Update(transaction)
 }
 
-func (s *Service) DeleteTransaction(transactionID uuid.UUID) error {
+func (s *Service) DeleteTransaction(transactionID ulid.ULID) error {
 	return s.Repository.Delete(transactionID)
 }
 
-func (s *Service) GetTransactionByID(transactionID uuid.UUID) (*Transaction, error) {
+func (s *Service) GetTransactionByID(transactionID ulid.ULID) (*Transaction, error) {
 	return s.Repository.GetByID(transactionID)
 }
 
-func (s *Service) GetAllTransactions(userID uuid.UUID) ([]*Transaction, error) {
+func (s *Service) GetAllTransactions(userID ulid.ULID) ([]*Transaction, error) {
 	return s.Repository.GetAll(userID)
 }
 
@@ -52,17 +66,24 @@ func (s *Service) GetTransactionsByName(name string) ([]*Transaction, error) {
 	return s.Repository.GetByName(name)
 }
 
-func (s *Service) GetTransactionsByCategory(categoryID uuid.UUID, userID uuid.UUID) ([]*Transaction, error) {
+func (s *Service) GetTransactionsByCategory(categoryID ulid.ULID, userID ulid.ULID) ([]*Transaction, error) {
 	return s.Repository.GetByCategory(categoryID, userID)
 }
 
-//CATEGORYS
-
+// CATEGORYS
 func (s *Service) CreateCategory(category *Category) error {
-	category.Id = uuid.New()
-	if err := s.CategoryExists(category.Name, category.UserId); err != nil {
+	userID, err := ulid.Parse(category.UserId)
+	if err != nil {
+		return errors.New("invalid user ID format")
+	}
+
+	if err := s.CategoryExists(category.Name, userID); err != nil {
 		return err
 	}
+
+	entropy := ulid.DefaultEntropy()
+	category.Id = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
+
 	return s.CategoryRepository.Create(category)
 }
 
@@ -70,19 +91,19 @@ func (s *Service) UpdateCategory(category *Category) error {
 	return s.CategoryRepository.Update(category)
 }
 
-func (s *Service) DeleteCategory(categoryID uuid.UUID, userID uuid.UUID) error {
+func (s *Service) DeleteCategory(categoryID ulid.ULID, userID ulid.ULID) error {
 	return s.CategoryRepository.Delete(categoryID, userID)
 }
 
-func (s *Service) GetCategoryByID(categoryID uuid.UUID, userID uuid.UUID) (*Category, error) {
+func (s *Service) GetCategoryByID(categoryID ulid.ULID, userID ulid.ULID) (*Category, error) {
 	return s.CategoryRepository.GetByID(categoryID, userID)
 }
 
-func (s *Service) GetAllCategories(userID uuid.UUID) ([]*Category, error) {
+func (s *Service) GetAllCategories(userID ulid.ULID) ([]*Category, error) {
 	return s.CategoryRepository.GetAll(userID)
 }
 
-func (s *Service) CategoryExists(categoryName string, userID uuid.UUID) error {
+func (s *Service) CategoryExists(categoryName string, userID ulid.ULID) error {
 	_, err := s.CategoryRepository.GetByName(categoryName, userID)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -94,4 +115,22 @@ func (s *Service) CategoryExists(categoryName string, userID uuid.UUID) error {
 	}
 
 	return errors.New("category already exists")
+}
+
+func (s *Service) CategoryValidation(categoryId ulid.ULID, userID ulid.ULID) error {
+	_, err := s.CategoryRepository.GetByID(categoryId, userID)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return errors.New("category does not exist")
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) GetNumberOfTransactions(userID ulid.ULID) (int64, error) {
+	return s.Repository.GetNumberOfTransactions(userID)
 }
