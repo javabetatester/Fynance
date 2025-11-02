@@ -102,6 +102,7 @@ func (r *GoalRepository) List() ([]*goal.Goal, error) {
 	if err := r.DB.Table("goals").Find(&rows).Error; err != nil {
 		return nil, err
 	}
+
 	out := make([]*goal.Goal, 0, len(rows))
 	for i := range rows {
 		g, err := toDomainGoal(&rows[i])
