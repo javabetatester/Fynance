@@ -1,13 +1,333 @@
 basePath: /api
 definitions:
-  auth.Login:
+  Fynance_internal_contracts.AuthLoginRequest:
     properties:
       email:
         type: string
       password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  Fynance_internal_contracts.AuthLoginResponse:
+    properties:
+      message:
+        type: string
+      token:
+        type: string
+      user:
         type: string
     type: object
-  user.Plan:
+  Fynance_internal_contracts.AuthRegisterRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  Fynance_internal_contracts.CategoryCreateRequest:
+    properties:
+      icon:
+        maxLength: 50
+        type: string
+      name:
+        type: string
+    required:
+    - name
+    type: object
+  Fynance_internal_contracts.ErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  Fynance_internal_contracts.GoalCreateRequest:
+    properties:
+      category_id:
+        type: string
+      end_at:
+        type: string
+      name:
+        type: string
+      target:
+        type: number
+    required:
+    - category_id
+    - name
+    - target
+    type: object
+  Fynance_internal_contracts.GoalUpdateRequest:
+    properties:
+      category_id:
+        type: string
+      end_at:
+        type: string
+      name:
+        type: string
+      target:
+        type: number
+    required:
+    - category_id
+    - name
+    - target
+    type: object
+  Fynance_internal_contracts.InvestmentContributionRequest:
+    properties:
+      amount:
+        type: number
+      category_id:
+        type: string
+      description:
+        type: string
+    required:
+    - amount
+    - category_id
+    type: object
+  Fynance_internal_contracts.InvestmentCreateRequest:
+    properties:
+      category_id:
+        type: string
+      initial_amount:
+        type: number
+      name:
+        type: string
+      return_rate:
+        type: number
+      type:
+        enum:
+        - CDB
+        - LCI
+        - LCA
+        - TESOURO_DIRETO
+        - ACOES
+        - FUNDOS
+        - CRIPTOMOEDAS
+        - PREVIDENCIA
+        type: string
+    required:
+    - initial_amount
+    - name
+    - type
+    type: object
+  Fynance_internal_contracts.InvestmentCreateResponse:
+    properties:
+      investment:
+        $ref: '#/definitions/Fynance_internal_domain_investment.Investment'
+      message:
+        type: string
+    type: object
+  Fynance_internal_contracts.InvestmentListResponse:
+    properties:
+      investments:
+        items:
+          $ref: '#/definitions/Fynance_internal_domain_investment.Investment'
+        type: array
+      total:
+        type: integer
+    type: object
+  Fynance_internal_contracts.InvestmentReturnResponse:
+    properties:
+      profit:
+        type: number
+      return_percentage:
+        type: number
+    type: object
+  Fynance_internal_contracts.InvestmentSingleResponse:
+    properties:
+      investment:
+        $ref: '#/definitions/Fynance_internal_domain_investment.Investment'
+    type: object
+  Fynance_internal_contracts.InvestmentWithdrawRequest:
+    properties:
+      amount:
+        type: number
+      category_id:
+        type: string
+      description:
+        type: string
+    required:
+    - amount
+    - category_id
+    type: object
+  Fynance_internal_contracts.MessageResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  Fynance_internal_contracts.TransactionCreateRequest:
+    properties:
+      amount:
+        type: number
+      category_id:
+        type: string
+      date:
+        type: string
+      description:
+        maxLength: 255
+        type: string
+      type:
+        enum:
+        - RECEIPT
+        - EXPENSE
+        - TRANSFER
+        - GOALS
+        - INVESTMENT
+        - WITHDRAW
+        type: string
+    required:
+    - amount
+    - category_id
+    - date
+    - type
+    type: object
+  Fynance_internal_contracts.TransactionCreateResponse:
+    properties:
+      message:
+        type: string
+      transaction:
+        $ref: '#/definitions/Fynance_internal_domain_transaction.Transaction'
+    type: object
+  Fynance_internal_contracts.UserCreateRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      password:
+        minLength: 8
+        type: string
+      plan:
+        enum:
+        - FREE
+        - BASIC
+        - PRO
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  Fynance_internal_contracts.UserDeletionResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  Fynance_internal_contracts.UserUpdateRequest:
+    properties:
+      email:
+        type: string
+      name:
+        type: string
+      plan:
+        enum:
+        - FREE
+        - BASIC
+        - PRO
+        type: string
+    type: object
+  Fynance_internal_domain_investment.Investment:
+    properties:
+      application_date:
+        type: string
+      created_at:
+        type: string
+      current_balance:
+        type: number
+      id:
+        items:
+          type: integer
+        type: array
+      name:
+        type: string
+      return_balance:
+        type: number
+      return_rate:
+        type: number
+      type:
+        $ref: '#/definitions/Fynance_internal_domain_investment.Types'
+      updated_at:
+        type: string
+      user_id:
+        items:
+          type: integer
+        type: array
+    type: object
+  Fynance_internal_domain_investment.Types:
+    enum:
+    - CDB
+    - LCI
+    - LCA
+    - TESOURO_DIRETO
+    - ACOES
+    - FUNDOS
+    - CRIPTOMOEDAS
+    - PREVIDENCIA
+    type: string
+    x-enum-varnames:
+    - TypeCDB
+    - TypeLCI
+    - TypeLCA
+    - TypeTesouro
+    - TypeAcoes
+    - TypeFundos
+    - TypeCripto
+    - TypePrevidencia
+  Fynance_internal_domain_transaction.Transaction:
+    properties:
+      amount:
+        type: number
+      category_id:
+        items:
+          type: integer
+        type: array
+      created_at:
+        type: string
+      date:
+        type: string
+      description:
+        type: string
+      id:
+        items:
+          type: integer
+        type: array
+      investment_id:
+        items:
+          type: integer
+        type: array
+      type:
+        $ref: '#/definitions/Fynance_internal_domain_transaction.Types'
+      updated_at:
+        type: string
+      user_id:
+        items:
+          type: integer
+        type: array
+    type: object
+  Fynance_internal_domain_transaction.Types:
+    enum:
+    - RECEIPT
+    - EXPENSE
+    - TRANSFER
+    - GOALS
+    - INVESTMENT
+    - WITHDRAW
+    type: string
+    x-enum-varnames:
+    - Receipt
+    - Expense
+    - Transfer
+    - Goals
+    - Investment
+    - Withdraw
+  Fynance_internal_domain_user.Plan:
     enum:
     - FREE
     - BASIC
@@ -17,9 +337,9 @@ definitions:
     - PlanFree
     - PlanBasic
     - PlanPro
-  user.User:
+  Fynance_internal_domain_user.User:
     properties:
-      createdAt:
+      created_at:
         type: string
       email:
         type: string
@@ -27,13 +347,11 @@ definitions:
         type: string
       name:
         type: string
-      password:
-        type: string
       plan:
-        $ref: '#/definitions/user.Plan'
-      planSince:
+        $ref: '#/definitions/Fynance_internal_domain_user.Plan'
+      plan_since:
         type: string
-      updatedAt:
+      updated_at:
         type: string
     type: object
 info:
@@ -53,27 +371,22 @@ paths:
         name: login
         required: true
         schema:
-          $ref: '#/definitions/auth.Login'
+          $ref: '#/definitions/Fynance_internal_contracts.AuthLoginRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Login bem-sucedido
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.AuthLoginResponse'
         "400":
           description: Erro de validação
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "401":
           description: Credenciais inválidas
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       summary: Login de usuário
       tags:
       - auth
@@ -88,26 +401,22 @@ paths:
         name: user
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/Fynance_internal_contracts.AuthRegisterRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Usuário registrado com sucesso
           schema:
-            type: string
+            $ref: '#/definitions/Fynance_internal_contracts.MessageResponse'
         "400":
           description: Erro de validação
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       summary: Registro de novo usuário
       tags:
       - auth
@@ -122,32 +431,26 @@ paths:
         name: category
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/Fynance_internal_contracts.CategoryCreateRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Categoria criada com sucesso
           schema:
-            type: string
+            $ref: '#/definitions/Fynance_internal_contracts.MessageResponse'
         "400":
           description: Erro de validação
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "401":
           description: Não autorizado
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Criar categoria de transação
@@ -164,32 +467,26 @@ paths:
         name: goal
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/Fynance_internal_contracts.GoalCreateRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Meta criada com sucesso
           schema:
-            type: string
+            $ref: '#/definitions/Fynance_internal_contracts.MessageResponse'
         "400":
           description: Erro de validação
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "401":
           description: Não autorizado
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Criar meta financeira
@@ -211,32 +508,26 @@ paths:
         name: goal
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/Fynance_internal_contracts.GoalUpdateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Meta atualizada com sucesso
           schema:
-            type: string
+            $ref: '#/definitions/Fynance_internal_contracts.MessageResponse'
         "400":
           description: Erro de validação
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "401":
           description: Não autorizado
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Atualizar meta financeira
@@ -253,21 +544,15 @@ paths:
         "200":
           description: Lista de investimentos
           schema:
-            items:
-              type: object
-            type: array
+            $ref: '#/definitions/Fynance_internal_contracts.InvestmentListResponse'
         "401":
           description: Não autorizado
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Listar investimentos
@@ -283,35 +568,227 @@ paths:
         name: investment
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/Fynance_internal_contracts.InvestmentCreateRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Investimento criado com sucesso
           schema:
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.InvestmentCreateResponse'
         "400":
           description: Erro de validação
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "401":
           description: Não autorizado
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Criar investimento
+      tags:
+      - investments
+  /api/investments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Remove um investimento do usuário quando não há saldo pendente
+      parameters:
+      - description: ID do investimento
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Investimento excluído
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.MessageResponse'
+        "400":
+          description: Requisição inválida
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "401":
+          description: Não autorizado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "404":
+          description: Investimento não encontrado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Excluir investimento
+      tags:
+      - investments
+    get:
+      consumes:
+      - application/json
+      description: Recupera os dados de um investimento específico do usuário autenticado
+      parameters:
+      - description: ID do investimento
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Dados do investimento
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.InvestmentSingleResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "401":
+          description: Não autorizado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "404":
+          description: Investimento não encontrado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obter investimento
+      tags:
+      - investments
+  /api/investments/{id}/contribution:
+    post:
+      consumes:
+      - application/json
+      description: Registra um aporte financeiro em um investimento existente
+      parameters:
+      - description: ID do investimento
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do aporte
+        in: body
+        name: contribution
+        required: true
+        schema:
+          $ref: '#/definitions/Fynance_internal_contracts.InvestmentContributionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Aporte registrado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.MessageResponse'
+        "400":
+          description: Dados inválidos
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "401":
+          description: Não autorizado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "404":
+          description: Investimento não encontrado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Realizar aporte
+      tags:
+      - investments
+  /api/investments/{id}/return:
+    get:
+      consumes:
+      - application/json
+      description: Obtém lucro absoluto e percentual acumulado do investimento
+      parameters:
+      - description: ID do investimento
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Retorno calculado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.InvestmentReturnResponse'
+        "400":
+          description: ID inválido
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "401":
+          description: Não autorizado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Calcular retorno de investimento
+      tags:
+      - investments
+  /api/investments/{id}/withdraw:
+    post:
+      consumes:
+      - application/json
+      description: Registra um resgate financeiro de um investimento existente
+      parameters:
+      - description: ID do investimento
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados do resgate
+        in: body
+        name: withdraw
+        required: true
+        schema:
+          $ref: '#/definitions/Fynance_internal_contracts.InvestmentWithdrawRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Resgate realizado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.MessageResponse'
+        "400":
+          description: Dados inválidos
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "401":
+          description: Não autorizado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "404":
+          description: Investimento não encontrado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "500":
+          description: Erro interno do servidor
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Realizar resgate
       tags:
       - investments
   /api/transactions:
@@ -326,20 +803,16 @@ paths:
           description: Lista de transações
           schema:
             items:
-              type: object
+              $ref: '#/definitions/Fynance_internal_domain_transaction.Transaction'
             type: array
         "401":
           description: Não autorizado
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Listar transações
@@ -355,33 +828,26 @@ paths:
         name: transaction
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/Fynance_internal_contracts.TransactionCreateRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Transação criada com sucesso
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.TransactionCreateResponse'
         "400":
           description: Erro de validação
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "401":
           description: Não autorizado
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Criar transação
@@ -398,26 +864,22 @@ paths:
         name: user
         required: true
         schema:
-          type: object
+          $ref: '#/definitions/Fynance_internal_contracts.UserCreateRequest'
       produces:
       - application/json
       responses:
         "201":
           description: Usuário criado com sucesso
           schema:
-            type: string
+            $ref: '#/definitions/Fynance_internal_contracts.MessageResponse'
         "400":
           description: Erro de validação
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       summary: Criar usuário
       tags:
       - users
@@ -439,27 +901,23 @@ paths:
         "200":
           description: Usuário excluído com sucesso
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.UserDeletionResponse'
         "400":
           description: ID inválido
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "401":
+          description: Não autorizado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "403":
           description: Acesso negado
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Excluir usuário
@@ -485,9 +943,7 @@ paths:
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Obter usuário por ID
@@ -509,32 +965,30 @@ paths:
         name: user
         required: true
         schema:
-          $ref: '#/definitions/user.User'
+          $ref: '#/definitions/Fynance_internal_contracts.UserUpdateRequest'
       produces:
       - application/json
       responses:
         "200":
           description: Dados do usuário atualizados
           schema:
-            type: object
+            $ref: '#/definitions/Fynance_internal_domain_user.User'
         "400":
           description: Erro de validação
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
+        "401":
+          description: Não autorizado
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "403":
           description: Acesso negado
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Atualizar usuário
@@ -558,12 +1012,14 @@ paths:
           description: Dados do usuário
           schema:
             type: object
+        "400":
+          description: Parâmetros inválidos
+          schema:
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
         "500":
           description: Erro interno do servidor
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/Fynance_internal_contracts.ErrorResponse'
       security:
       - BearerAuth: []
       summary: Obter usuário por email

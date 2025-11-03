@@ -31,7 +31,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/auth.Login"
+                            "$ref": "#/definitions/Fynance_internal_contracts.AuthLoginRequest"
                         }
                     }
                 ],
@@ -39,26 +39,19 @@
                     "200": {
                         "description": "Login bem-sucedido",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/Fynance_internal_contracts.AuthLoginResponse"
                         }
                     },
                     "400": {
                         "description": "Erro de validação",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Credenciais inválidas",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -84,7 +77,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/Fynance_internal_contracts.AuthRegisterRequest"
                         }
                     }
                 ],
@@ -92,25 +85,19 @@
                     "201": {
                         "description": "Usuário registrado com sucesso",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/Fynance_internal_contracts.MessageResponse"
                         }
                     },
                     "400": {
                         "description": "Erro de validação",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -141,7 +128,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/Fynance_internal_contracts.CategoryCreateRequest"
                         }
                     }
                 ],
@@ -149,34 +136,25 @@
                     "201": {
                         "description": "Categoria criada com sucesso",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/Fynance_internal_contracts.MessageResponse"
                         }
                     },
                     "400": {
                         "description": "Erro de validação",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Não autorizado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -207,7 +185,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/Fynance_internal_contracts.GoalCreateRequest"
                         }
                     }
                 ],
@@ -215,34 +193,25 @@
                     "201": {
                         "description": "Meta criada com sucesso",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/Fynance_internal_contracts.MessageResponse"
                         }
                     },
                     "400": {
                         "description": "Erro de validação",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Não autorizado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -280,7 +249,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/Fynance_internal_contracts.GoalUpdateRequest"
                         }
                     }
                 ],
@@ -288,34 +257,25 @@
                     "200": {
                         "description": "Meta atualizada com sucesso",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/Fynance_internal_contracts.MessageResponse"
                         }
                     },
                     "400": {
                         "description": "Erro de validação",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Não autorizado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -343,28 +303,19 @@
                     "200": {
                         "description": "Lista de investimentos",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "type": "object"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.InvestmentListResponse"
                         }
                     },
                     "401": {
                         "description": "Não autorizado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -393,7 +344,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/Fynance_internal_contracts.InvestmentCreateRequest"
                         }
                     }
                 ],
@@ -401,34 +352,334 @@
                     "201": {
                         "description": "Investimento criado com sucesso",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/Fynance_internal_contracts.InvestmentCreateResponse"
                         }
                     },
                     "400": {
                         "description": "Erro de validação",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Não autorizado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investments/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Recupera os dados de um investimento específico do usuário autenticado",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "investments"
+                ],
+                "summary": "Obter investimento",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do investimento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Dados do investimento",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.InvestmentSingleResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "ID inválido",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Não autorizado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Investimento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Remove um investimento do usuário quando não há saldo pendente",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "investments"
+                ],
+                "summary": "Excluir investimento",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do investimento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Investimento excluído",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Requisição inválida",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Não autorizado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Investimento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investments/{id}/contribution": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Registra um aporte financeiro em um investimento existente",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "investments"
+                ],
+                "summary": "Realizar aporte",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do investimento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do aporte",
+                        "name": "contribution",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.InvestmentContributionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Aporte registrado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Dados inválidos",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Não autorizado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Investimento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investments/{id}/return": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Obtém lucro absoluto e percentual acumulado do investimento",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "investments"
+                ],
+                "summary": "Calcular retorno de investimento",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do investimento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Retorno calculado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.InvestmentReturnResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "ID inválido",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Não autorizado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/investments/{id}/withdraw": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Registra um resgate financeiro de um investimento existente",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "investments"
+                ],
+                "summary": "Realizar resgate",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "ID do investimento",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Dados do resgate",
+                        "name": "withdraw",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.InvestmentWithdrawRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Resgate realizado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Dados inválidos",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Não autorizado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Investimento não encontrado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Erro interno do servidor",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -458,26 +709,20 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "type": "object"
+                                "$ref": "#/definitions/Fynance_internal_domain_transaction.Transaction"
                             }
                         }
                     },
                     "401": {
                         "description": "Não autorizado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -506,7 +751,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/Fynance_internal_contracts.TransactionCreateRequest"
                         }
                     }
                 ],
@@ -514,35 +759,25 @@
                     "201": {
                         "description": "Transação criada com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/Fynance_internal_contracts.TransactionCreateResponse"
                         }
                     },
                     "400": {
                         "description": "Erro de validação",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Não autorizado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -568,7 +803,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/Fynance_internal_contracts.UserCreateRequest"
                         }
                     }
                 ],
@@ -576,25 +811,19 @@
                     "201": {
                         "description": "Usuário criado com sucesso",
                         "schema": {
-                            "type": "string"
+                            "$ref": "#/definitions/Fynance_internal_contracts.MessageResponse"
                         }
                     },
                     "400": {
                         "description": "Erro de validação",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -634,13 +863,16 @@
                             "type": "object"
                         }
                     },
+                    "400": {
+                        "description": "Parâmetros inválidos",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -683,10 +915,7 @@
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -722,7 +951,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.User"
+                            "$ref": "#/definitions/Fynance_internal_contracts.UserUpdateRequest"
                         }
                     }
                 ],
@@ -730,34 +959,31 @@
                     "200": {
                         "description": "Dados do usuário atualizados",
                         "schema": {
-                            "type": "object"
+                            "$ref": "#/definitions/Fynance_internal_domain_user.User"
                         }
                     },
                     "400": {
                         "description": "Erro de validação",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Não autorizado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Acesso negado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -792,37 +1018,31 @@
                     "200": {
                         "description": "Usuário excluído com sucesso",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.UserDeletionResponse"
                         }
                     },
                     "400": {
                         "description": "ID inválido",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Não autorizado",
+                        "schema": {
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "403": {
                         "description": "Acesso negado",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Erro interno do servidor",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
                         }
                     }
                 }
@@ -830,18 +1050,478 @@
         }
     },
     "definitions": {
-        "auth.Login": {
+        "Fynance_internal_contracts.AuthLoginRequest": {
             "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
             "properties": {
                 "email": {
                     "type": "string"
                 },
                 "password": {
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        },
+        "Fynance_internal_contracts.AuthLoginResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "token": {
+                    "type": "string"
+                },
+                "user": {
                     "type": "string"
                 }
             }
         },
-        "user.Plan": {
+        "Fynance_internal_contracts.AuthRegisterRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                }
+            }
+        },
+        "Fynance_internal_contracts.CategoryCreateRequest": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "icon": {
+                    "type": "string",
+                    "maxLength": 50
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "Fynance_internal_contracts.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "Fynance_internal_contracts.GoalCreateRequest": {
+            "type": "object",
+            "required": [
+                "category_id",
+                "name",
+                "target"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "number"
+                }
+            }
+        },
+        "Fynance_internal_contracts.GoalUpdateRequest": {
+            "type": "object",
+            "required": [
+                "category_id",
+                "name",
+                "target"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "end_at": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "target": {
+                    "type": "number"
+                }
+            }
+        },
+        "Fynance_internal_contracts.InvestmentContributionRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "category_id"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
+        "Fynance_internal_contracts.InvestmentCreateRequest": {
+            "type": "object",
+            "required": [
+                "initial_amount",
+                "name",
+                "type"
+            ],
+            "properties": {
+                "category_id": {
+                    "type": "string"
+                },
+                "initial_amount": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "return_rate": {
+                    "type": "number"
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "CDB",
+                        "LCI",
+                        "LCA",
+                        "TESOURO_DIRETO",
+                        "ACOES",
+                        "FUNDOS",
+                        "CRIPTOMOEDAS",
+                        "PREVIDENCIA"
+                    ]
+                }
+            }
+        },
+        "Fynance_internal_contracts.InvestmentCreateResponse": {
+            "type": "object",
+            "properties": {
+                "investment": {
+                    "$ref": "#/definitions/Fynance_internal_domain_investment.Investment"
+                },
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Fynance_internal_contracts.InvestmentListResponse": {
+            "type": "object",
+            "properties": {
+                "investments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Fynance_internal_domain_investment.Investment"
+                    }
+                },
+                "total": {
+                    "type": "integer"
+                }
+            }
+        },
+        "Fynance_internal_contracts.InvestmentReturnResponse": {
+            "type": "object",
+            "properties": {
+                "profit": {
+                    "type": "number"
+                },
+                "return_percentage": {
+                    "type": "number"
+                }
+            }
+        },
+        "Fynance_internal_contracts.InvestmentSingleResponse": {
+            "type": "object",
+            "properties": {
+                "investment": {
+                    "$ref": "#/definitions/Fynance_internal_domain_investment.Investment"
+                }
+            }
+        },
+        "Fynance_internal_contracts.InvestmentWithdrawRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "category_id"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                }
+            }
+        },
+        "Fynance_internal_contracts.MessageResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Fynance_internal_contracts.TransactionCreateRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "category_id",
+                "date",
+                "type"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category_id": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string",
+                    "maxLength": 255
+                },
+                "type": {
+                    "type": "string",
+                    "enum": [
+                        "RECEIPT",
+                        "EXPENSE",
+                        "TRANSFER",
+                        "GOALS",
+                        "INVESTMENT",
+                        "WITHDRAW"
+                    ]
+                }
+            }
+        },
+        "Fynance_internal_contracts.TransactionCreateResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                },
+                "transaction": {
+                    "$ref": "#/definitions/Fynance_internal_domain_transaction.Transaction"
+                }
+            }
+        },
+        "Fynance_internal_contracts.UserCreateRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string",
+                    "minLength": 8
+                },
+                "plan": {
+                    "type": "string",
+                    "enum": [
+                        "FREE",
+                        "BASIC",
+                        "PRO"
+                    ]
+                }
+            }
+        },
+        "Fynance_internal_contracts.UserDeletionResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "Fynance_internal_contracts.UserUpdateRequest": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "plan": {
+                    "type": "string",
+                    "enum": [
+                        "FREE",
+                        "BASIC",
+                        "PRO"
+                    ]
+                }
+            }
+        },
+        "Fynance_internal_domain_investment.Investment": {
+            "type": "object",
+            "properties": {
+                "application_date": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "current_balance": {
+                    "type": "number"
+                },
+                "id": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "return_balance": {
+                    "type": "number"
+                },
+                "return_rate": {
+                    "type": "number"
+                },
+                "type": {
+                    "$ref": "#/definitions/Fynance_internal_domain_investment.Types"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "Fynance_internal_domain_investment.Types": {
+            "type": "string",
+            "enum": [
+                "CDB",
+                "LCI",
+                "LCA",
+                "TESOURO_DIRETO",
+                "ACOES",
+                "FUNDOS",
+                "CRIPTOMOEDAS",
+                "PREVIDENCIA"
+            ],
+            "x-enum-varnames": [
+                "TypeCDB",
+                "TypeLCI",
+                "TypeLCA",
+                "TypeTesouro",
+                "TypeAcoes",
+                "TypeFundos",
+                "TypeCripto",
+                "TypePrevidencia"
+            ]
+        },
+        "Fynance_internal_domain_transaction.Transaction": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "category_id": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "investment_id": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                },
+                "type": {
+                    "$ref": "#/definitions/Fynance_internal_domain_transaction.Types"
+                },
+                "updated_at": {
+                    "type": "string"
+                },
+                "user_id": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    }
+                }
+            }
+        },
+        "Fynance_internal_domain_transaction.Types": {
+            "type": "string",
+            "enum": [
+                "RECEIPT",
+                "EXPENSE",
+                "TRANSFER",
+                "GOALS",
+                "INVESTMENT",
+                "WITHDRAW"
+            ],
+            "x-enum-varnames": [
+                "Receipt",
+                "Expense",
+                "Transfer",
+                "Goals",
+                "Investment",
+                "Withdraw"
+            ]
+        },
+        "Fynance_internal_domain_user.Plan": {
             "type": "string",
             "enum": [
                 "FREE",
@@ -854,10 +1534,10 @@
                 "PlanPro"
             ]
         },
-        "user.User": {
+        "Fynance_internal_domain_user.User": {
             "type": "object",
             "properties": {
-                "createdAt": {
+                "created_at": {
                     "type": "string"
                 },
                 "email": {
@@ -869,16 +1549,13 @@
                 "name": {
                     "type": "string"
                 },
-                "password": {
-                    "type": "string"
-                },
                 "plan": {
-                    "$ref": "#/definitions/user.Plan"
+                    "$ref": "#/definitions/Fynance_internal_domain_user.Plan"
                 },
-                "planSince": {
+                "plan_since": {
                     "type": "string"
                 },
-                "updatedAt": {
+                "updated_at": {
                     "type": "string"
                 }
             }
