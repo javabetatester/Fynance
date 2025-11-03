@@ -8,5 +8,5 @@ const (
 	Transfer   Types = "TRANSFER"
 	Goals      Types = "GOALS"
 	Investment Types = "INVESTMENT"
-	Withdraw Types = "WITHDRAW"
+	Withdraw   Types = "WITHDRAW"
 )

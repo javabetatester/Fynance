@@ -2,6 +2,7 @@ package investment
 
 import (
 	"Fynance/internal/domain/transaction"
+	"Fynance/internal/utils"
 	"crypto/rand"
 	"errors"
 	"time"
@@ -22,9 +23,7 @@ func NewService(repo Repository, transactionRepo transaction.Repository) *Servic
 }
 
 func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, error) {
-	entropy := ulid.Monotonic(rand.Reader, 0)
-	investmentId := ulid.MustNew(ulid.Timestamp(time.Now()), entropy)
-
+	investmentId := utils.GenerateULIDObject()
 	investment := &Investment{
 		Id:              investmentId,
 		UserId:          req.UserId,
@@ -41,7 +40,7 @@ func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, er
 		return nil, err
 	}
 
-	transId := ulid.MustNew(ulid.Timestamp(time.Now()), entropy)
+	transId := utils.GenerateULIDObject()
 
 	trans := &transaction.Transaction{
 		Id:           transId,
@@ -68,8 +67,7 @@ func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float6
 		return errors.New("investment not found")
 	}
 
-	entropy := ulid.Monotonic(rand.Reader, 0)
-	transId := ulid.MustNew(ulid.Timestamp(time.Now()), entropy)
+	transId := utils.GenerateULIDObject()
 
 	trans := &transaction.Transaction{
 		Id:           transId,

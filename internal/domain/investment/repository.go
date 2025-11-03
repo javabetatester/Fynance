@@ -12,3 +12,5 @@ type Repository interface {
 	GetTotalBalance(userId ulid.ULID) (float64, error)
 	GetByType(userId ulid.ULID, investmentType Types) ([]*Investment, error)
 }
+
+
