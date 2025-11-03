@@ -9,7 +9,7 @@ import (
 type Goal struct {
 	Id            ulid.ULID `gorm:"type:varchar(26);primaryKey"`
 	UserId        ulid.ULID `gorm:"type:varchar(26);index;not null"`
-	Name          string    `gorm:"not null"`
+	Name          string    `gorm:"not null;unique"`
 	TargetAmount  float64   `gorm:"not null"`
 	CurrentAmount float64   `gorm:"not null"`
 	StartedAt     time.Time

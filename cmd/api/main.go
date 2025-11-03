@@ -79,6 +79,7 @@ func main() {
 		goals := private.Group("/goals")
 		{
 			goals.POST("", handler.CreateGoal)
+			goals.PATCH("/:id", handler.UpdateGoal)
 		}
 
 		transactions := private.Group("/transactions")

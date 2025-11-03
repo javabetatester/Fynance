@@ -1,28 +1,62 @@
 package goal
 
 import (
+	"Fynance/internal/domain/user"
 	"Fynance/internal/utils"
 	"fmt"
+	"time"
 
 	"github.com/oklog/ulid/v2"
 )
 
 type Service struct {
 	Repository Repository
+	UserService user.Service
 }
 
-func (s *Service) CreateGoal(goal *Goal) error {
-    goal.Id = utils.GenerateULIDObject()
-    now := utils.SetTimestamps()
-    goal.CreatedAt = now
-    goal.UpdatedAt = now
-	fmt.Println("CurrentAmount", goal.CurrentAmount)
-	fmt.Println("TargetAmount", goal.TargetAmount)
-    return s.Repository.Create(goal)
+func (s *Service) CreateGoal(goal *GoalCreateRequest) error {
+
+	err := Validate(*goal)
+	if err != nil {
+		return err
+	}
+
+	goalEntity := &Goal{
+		Id:            utils.GenerateULIDObject(),
+		UserId:        goal.UserId,
+		Name:          goal.Name,
+		TargetAmount:  goal.Target,
+		CurrentAmount: goal.Target,
+		StartedAt:     time.Now(),
+		EndedAt:       goal.EndedAt,
+		Status:        Active,
+	}
+
+    return s.Repository.Create(goalEntity)
 }
 
-func (s *Service) UpdateGoal(goal *Goal) error {
-	return s.Repository.Update(goal)
+func (s *Service) UpdateGoal(goal *GoalUpdateRequest) error {
+	
+
+	err := ValidateUpdateGoal(*goal)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println(goal.Id.String())
+	fmt.Println(goal.UserId.String())
+
+	err = s.CheckGoalBelongsToUser(goal.Id, goal.UserId)
+	if err != nil {
+		return err
+	}
+
+	return s.Repository.UpdateFields(goal.Id, map[string]interface{}{
+		"name":          goal.Name,
+		"target_amount": goal.Target,
+		"ended_at":      goal.EndedAt,
+		"updated_at":    time.Now(),
+	})
 }
 
 func (s *Service) DeleteGoal(id ulid.ULID) error {
@@ -39,4 +73,38 @@ func (s *Service) GetGoalsByUserID(userID ulid.ULID) ([]*Goal, error) {
 
 func (s *Service) ListGoals() ([]*Goal, error) {
 	return s.Repository.List()
+}
+
+func (s *Service) CheckGoalBelongsToUser(goalID ulid.ULID, userID ulid.ULID) error {
+	userBelongs, err := s.Repository.CheckGoalBelongsToUser(goalID, userID)
+	if err != nil {
+		return err
+	}
+	if !userBelongs {
+		return  fmt.Errorf("goal does not belong to user")
+	}
+
+	return  nil
+}
+
+func Validate(goal GoalCreateRequest) error {
+	if goal.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+
+	return nil
+}
+
+
+func ValidateUpdateGoal(goal GoalUpdateRequest) error {
+	if goal.Name == "" {
+		return fmt.Errorf("name is required")
+	}
+	if goal.Target == 0 {
+		return fmt.Errorf("target must be greater than 0")
+	}
+	if goal.EndedAt.Before(time.Now()) {
+		return fmt.Errorf("ended_at must be in the future")
+	}
+	return nil
 }

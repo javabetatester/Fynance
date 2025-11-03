@@ -1,8 +1,22 @@
 package goal
 
-import "time"
+import (
+	"time"
+
+	"github.com/oklog/ulid/v2"
+)
 
 type GoalCreateRequest struct {
+	UserId     ulid.ULID `json:"user_id"`
+	Name       string    `json:"name"`
+	Target     float64   `json:"target"`
+	CategoryId string    `json:"category_id"`
+	EndedAt    time.Time `json:"end_at"`
+}
+
+type GoalUpdateRequest struct {
+	Id         ulid.ULID `json:"id"`
+	UserId     ulid.ULID `json:"user_id"`
 	Name       string    `json:"name"`
 	Target     float64   `json:"target"`
 	CategoryId string    `json:"category_id"`
@@ -10,8 +24,8 @@ type GoalCreateRequest struct {
 }
 
 type GoalDashboardResponse struct {
-	TargetAmount  float64 `json:"progress_initial_amount"`
-	CurrentAmount float64 `json:"progress_end_amount"`
+	TargetAmount  float64 `json:"target_amount"`
+	CurrentAmount float64 `json:"current_amount"`
 	EndedAt       time.Time
 	Status        GoalStatus
 }
