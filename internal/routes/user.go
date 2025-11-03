@@ -8,6 +8,17 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// CreateUser godoc
+// @Summary      Criar usuário
+// @Description  Cria um novo usuário no sistema
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        user body object true "Dados do usuário"
+// @Success      201 {string} string "Usuário criado com sucesso"
+// @Failure      400 {object} map[string]string "Erro de validação"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/users [post]
 func (h *Handler) CreateUser(c *gin.Context) {
 	var user user.User
 	if err := c.ShouldBindJSON(&user); err != nil {
@@ -21,6 +32,17 @@ func (h *Handler) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusCreated, "User created with success")
 }
 
+// GetUserByID godoc
+// @Summary      Obter usuário por ID
+// @Description  Busca um usuário pelo seu ID
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "ID do usuário"
+// @Success      200 {object} object "Dados do usuário"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/users/{id} [get]
+// @Security     BearerAuth
 func (h *Handler) GetUserByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -33,6 +55,17 @@ func (h *Handler) GetUserByID(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// GetUserByEmail godoc
+// @Summary      Obter usuário por email
+// @Description  Busca um usuário pelo seu email
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        email query string true "Email do usuário"
+// @Success      200 {object} object "Dados do usuário"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/users/email [get]
+// @Security     BearerAuth
 func (h *Handler) GetUserByEmail(c *gin.Context) {
 	email := c.Param("email")
 	user, err := h.UserService.GetByEmail(email)
@@ -43,6 +76,20 @@ func (h *Handler) GetUserByEmail(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// UpdateUser godoc
+// @Summary      Atualizar usuário
+// @Description  Atualiza os dados de um usuário (apenas o próprio usuário pode atualizar)
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "ID do usuário"
+// @Param        user body user.User true "Dados atualizados do usuário"
+// @Success      200 {object} object "Dados do usuário atualizados"
+// @Failure      400 {object} map[string]string "Erro de validação"
+// @Failure      403 {object} map[string]string "Acesso negado"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/users/{id} [put]
+// @Security     BearerAuth
 func (h *Handler) UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := utils.ParseULID(idStr)
@@ -83,6 +130,19 @@ func (h *Handler) UpdateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, user)
 }
 
+// DeleteUser godoc
+// @Summary      Excluir usuário
+// @Description  Exclui um usuário do sistema (apenas o próprio usuário pode se excluir)
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "ID do usuário"
+// @Success      200 {object} map[string]string "Usuário excluído com sucesso"
+// @Failure      400 {object} map[string]string "ID inválido"
+// @Failure      403 {object} map[string]string "Acesso negado"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/users/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := utils.ParseULID(idStr)

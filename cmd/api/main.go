@@ -10,8 +10,22 @@ import (
 	"Fynance/internal/middleware"
 	"Fynance/internal/routes"
 
+	docs "Fynance/docs"
+
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
+
+// @title Fynance API
+// @version 1.0
+// @description API de gestão financeira pessoal (Fynance)
+// @BasePath /api
+// @schemes http
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Utilize "Bearer <token>" no header Authorization
 
 func main() {
 	db := infrastructure.NewDb()
@@ -57,6 +71,10 @@ func main() {
 	}
 
 	router := gin.Default()
+
+	// Configuração Swagger
+	docs.SwaggerInfo.BasePath = "/api"
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	public := router.Group("/api")
 	{

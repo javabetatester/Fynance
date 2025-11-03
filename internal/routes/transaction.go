@@ -17,6 +17,19 @@ type CreateTransactionRequest struct {
 	Date        time.Time         `json:"date" binding:"required"`
 }
 
+// CreateTransaction godoc
+// @Summary      Criar transação
+// @Description  Cria uma nova transação financeira para o usuário autenticado
+// @Tags         transactions
+// @Accept       json
+// @Produce      json
+// @Param        transaction body object true "Dados da transação"
+// @Success      201 {object} map[string]interface{} "Transação criada com sucesso"
+// @Failure      400 {object} map[string]string "Erro de validação"
+// @Failure      401 {object} map[string]string "Não autorizado"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/transactions [post]
+// @Security     BearerAuth
 func (h *Handler) CreateTransaction(c *gin.Context) {
 	var req CreateTransactionRequest
 
@@ -51,6 +64,17 @@ func (h *Handler) CreateTransaction(c *gin.Context) {
 	})
 }
 
+// GetTransactions godoc
+// @Summary      Listar transações
+// @Description  Lista todas as transações do usuário autenticado
+// @Tags         transactions
+// @Accept       json
+// @Produce      json
+// @Success      200 {array} object "Lista de transações"
+// @Failure      401 {object} map[string]string "Não autorizado"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/transactions [get]
+// @Security     BearerAuth
 func (h *Handler) GetTransactions(c *gin.Context) {
 
 	userID, err := h.GetUserIDFromContext(c)

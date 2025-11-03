@@ -20,7 +20,7 @@ type goalDB struct {
 	TargetAmount  float64 `gorm:"not null"`
 	CurrentAmount float64 `gorm:"not null"`
 	StartedAt     time.Time
-	EndedAt       time.Time
+	EndedAt       *time.Time
 	Status        goal.GoalStatus `gorm:"not null"`
 	CreatedAt     time.Time
 	UpdatedAt     time.Time
@@ -126,7 +126,7 @@ func (r *GoalRepository) UpdateFields(id ulid.ULID, fields map[string]interface{
 func (r *GoalRepository) CheckGoalBelongsToUser(goalID ulid.ULID, userID ulid.ULID) (bool, error) {
 	var count int64
 	err := r.DB.Table("goals").Where("id = ? AND user_id = ?", goalID.String(), userID.String()).Count(&count).Error
-		
+
 	if err != nil {
 		return false, err
 	}

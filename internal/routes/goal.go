@@ -8,6 +8,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// CreateGoal godoc
+// @Summary      Criar meta financeira
+// @Description  Cria uma nova meta financeira para o usuário autenticado
+// @Tags         goals
+// @Accept       json
+// @Produce      json
+// @Param        goal body object true "Dados da meta"
+// @Success      201 {string} string "Meta criada com sucesso"
+// @Failure      400 {object} map[string]string "Erro de validação"
+// @Failure      401 {object} map[string]string "Não autorizado"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/goals [post]
+// @Security     BearerAuth
 func (h *Handler) CreateGoal(c *gin.Context) {
 	var goal goal.GoalCreateRequest
 	if err := c.ShouldBindJSON(&goal); err != nil {
@@ -29,6 +42,20 @@ func (h *Handler) CreateGoal(c *gin.Context) {
 	c.JSON(http.StatusCreated, "Goal created with success")
 }
 
+// UpdateGoal godoc
+// @Summary      Atualizar meta financeira
+// @Description  Atualiza uma meta financeira existente do usuário autenticado
+// @Tags         goals
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "ID da meta"
+// @Param        goal body object true "Dados atualizados da meta"
+// @Success      200 {string} string "Meta atualizada com sucesso"
+// @Failure      400 {object} map[string]string "Erro de validação"
+// @Failure      401 {object} map[string]string "Não autorizado"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/goals/{id} [patch]
+// @Security     BearerAuth
 func (h *Handler) UpdateGoal(c *gin.Context) {
 	var goal goal.GoalUpdateRequest
 	if err := c.ShouldBindJSON(&goal); err != nil {

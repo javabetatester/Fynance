@@ -7,6 +7,19 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// CreateCategory godoc
+// @Summary      Criar categoria de transação
+// @Description  Cria uma nova categoria de transação para o usuário autenticado
+// @Tags         categories
+// @Accept       json
+// @Produce      json
+// @Param        category body object true "Dados da categoria"
+// @Success      201 {string} string "Categoria criada com sucesso"
+// @Failure      400 {object} map[string]string "Erro de validação"
+// @Failure      401 {object} map[string]string "Não autorizado"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/categories [post]
+// @Security     BearerAuth
 func (h *Handler) CreateCategory(c *gin.Context) {
 	var category transaction.Category
 	if err := c.ShouldBindJSON(&category); err != nil {

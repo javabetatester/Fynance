@@ -10,12 +10,11 @@ import (
 )
 
 type Service struct {
-	Repository Repository
+	Repository  Repository
 	UserService user.Service
 }
 
 func (s *Service) CreateGoal(goal *GoalCreateRequest) error {
-
 	err := Validate(*goal)
 	if err != nil {
 		return err
@@ -32,19 +31,14 @@ func (s *Service) CreateGoal(goal *GoalCreateRequest) error {
 		Status:        Active,
 	}
 
-    return s.Repository.Create(goalEntity)
+	return s.Repository.Create(goalEntity)
 }
 
 func (s *Service) UpdateGoal(goal *GoalUpdateRequest) error {
-	
-
 	err := ValidateUpdateGoal(*goal)
 	if err != nil {
 		return err
 	}
-
-	fmt.Println(goal.Id.String())
-	fmt.Println(goal.UserId.String())
 
 	err = s.CheckGoalBelongsToUser(goal.Id, goal.UserId)
 	if err != nil {
@@ -81,20 +75,25 @@ func (s *Service) CheckGoalBelongsToUser(goalID ulid.ULID, userID ulid.ULID) err
 		return err
 	}
 	if !userBelongs {
-		return  fmt.Errorf("goal does not belong to user")
+		return fmt.Errorf("goal does not belong to user")
 	}
 
-	return  nil
+	return nil
 }
 
 func Validate(goal GoalCreateRequest) error {
 	if goal.Name == "" {
 		return fmt.Errorf("name is required")
 	}
+	if goal.Target <= 0 {
+		return fmt.Errorf("target must be greater than 0")
+	}
+	if goal.EndedAt != nil && goal.EndedAt.Before(time.Now()) {
+		return fmt.Errorf("ended_at must be in the future")
+	}
 
 	return nil
 }
-
 
 func ValidateUpdateGoal(goal GoalUpdateRequest) error {
 	if goal.Name == "" {
@@ -103,7 +102,7 @@ func ValidateUpdateGoal(goal GoalUpdateRequest) error {
 	if goal.Target == 0 {
 		return fmt.Errorf("target must be greater than 0")
 	}
-	if goal.EndedAt.Before(time.Now()) {
+	if goal.EndedAt != nil && goal.EndedAt.Before(time.Now()) {
 		return fmt.Errorf("ended_at must be in the future")
 	}
 	return nil

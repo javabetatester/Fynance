@@ -1,0 +1,580 @@
+basePath: /api
+definitions:
+  auth.Login:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    type: object
+  user.Plan:
+    enum:
+    - FREE
+    - BASIC
+    - PRO
+    type: string
+    x-enum-varnames:
+    - PlanFree
+    - PlanBasic
+    - PlanPro
+  user.User:
+    properties:
+      createdAt:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      plan:
+        $ref: '#/definitions/user.Plan'
+      planSince:
+        type: string
+      updatedAt:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API de gestão financeira pessoal (Fynance)
+  title: Fynance API
+  version: "1.0"
+paths:
+  /api/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica um usuário e retorna um token JWT
+      parameters:
+      - description: Credenciais de login
+        in: body
+        name: login
+        required: true
+        schema:
+          $ref: '#/definitions/auth.Login'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Login bem-sucedido
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Erro de validação
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Credenciais inválidas
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Login de usuário
+      tags:
+      - auth
+  /api/auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo usuário no sistema
+      parameters:
+      - description: Dados do usuário
+        in: body
+        name: user
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Usuário registrado com sucesso
+          schema:
+            type: string
+        "400":
+          description: Erro de validação
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Registro de novo usuário
+      tags:
+      - auth
+  /api/categories:
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova categoria de transação para o usuário autenticado
+      parameters:
+      - description: Dados da categoria
+        in: body
+        name: category
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Categoria criada com sucesso
+          schema:
+            type: string
+        "400":
+          description: Erro de validação
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Não autorizado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Criar categoria de transação
+      tags:
+      - categories
+  /api/goals:
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova meta financeira para o usuário autenticado
+      parameters:
+      - description: Dados da meta
+        in: body
+        name: goal
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Meta criada com sucesso
+          schema:
+            type: string
+        "400":
+          description: Erro de validação
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Não autorizado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Criar meta financeira
+      tags:
+      - goals
+  /api/goals/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Atualiza uma meta financeira existente do usuário autenticado
+      parameters:
+      - description: ID da meta
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados atualizados da meta
+        in: body
+        name: goal
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Meta atualizada com sucesso
+          schema:
+            type: string
+        "400":
+          description: Erro de validação
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Não autorizado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Atualizar meta financeira
+      tags:
+      - goals
+  /api/investments:
+    get:
+      consumes:
+      - application/json
+      description: Lista todos os investimentos do usuário autenticado
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de investimentos
+          schema:
+            items:
+              type: object
+            type: array
+        "401":
+          description: Não autorizado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar investimentos
+      tags:
+      - investments
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo investimento para o usuário autenticado
+      parameters:
+      - description: Dados do investimento
+        in: body
+        name: investment
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Investimento criado com sucesso
+          schema:
+            type: object
+        "400":
+          description: Erro de validação
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Não autorizado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Criar investimento
+      tags:
+      - investments
+  /api/transactions:
+    get:
+      consumes:
+      - application/json
+      description: Lista todas as transações do usuário autenticado
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lista de transações
+          schema:
+            items:
+              type: object
+            type: array
+        "401":
+          description: Não autorizado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Listar transações
+      tags:
+      - transactions
+    post:
+      consumes:
+      - application/json
+      description: Cria uma nova transação financeira para o usuário autenticado
+      parameters:
+      - description: Dados da transação
+        in: body
+        name: transaction
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Transação criada com sucesso
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Erro de validação
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Não autorizado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Criar transação
+      tags:
+      - transactions
+  /api/users:
+    post:
+      consumes:
+      - application/json
+      description: Cria um novo usuário no sistema
+      parameters:
+      - description: Dados do usuário
+        in: body
+        name: user
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Usuário criado com sucesso
+          schema:
+            type: string
+        "400":
+          description: Erro de validação
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Criar usuário
+      tags:
+      - users
+  /api/users/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Exclui um usuário do sistema (apenas o próprio usuário pode se
+        excluir)
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Usuário excluído com sucesso
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: ID inválido
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Acesso negado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Excluir usuário
+      tags:
+      - users
+    get:
+      consumes:
+      - application/json
+      description: Busca um usuário pelo seu ID
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Dados do usuário
+          schema:
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obter usuário por ID
+      tags:
+      - users
+    put:
+      consumes:
+      - application/json
+      description: Atualiza os dados de um usuário (apenas o próprio usuário pode
+        atualizar)
+      parameters:
+      - description: ID do usuário
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Dados atualizados do usuário
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/user.User'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Dados do usuário atualizados
+          schema:
+            type: object
+        "400":
+          description: Erro de validação
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: Acesso negado
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Atualizar usuário
+      tags:
+      - users
+  /api/users/email:
+    get:
+      consumes:
+      - application/json
+      description: Busca um usuário pelo seu email
+      parameters:
+      - description: Email do usuário
+        in: query
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Dados do usuário
+          schema:
+            type: object
+        "500":
+          description: Erro interno do servidor
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Obter usuário por email
+      tags:
+      - users
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: Utilize "Bearer <token>" no header Authorization
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

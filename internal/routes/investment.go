@@ -9,6 +9,19 @@ import (
 	"github.com/oklog/ulid/v2"
 )
 
+// CreateInvestment godoc
+// @Summary      Criar investimento
+// @Description  Cria um novo investimento para o usuário autenticado
+// @Tags         investments
+// @Accept       json
+// @Produce      json
+// @Param        investment body object true "Dados do investimento"
+// @Success      201 {object} object "Investimento criado com sucesso"
+// @Failure      400 {object} map[string]string "Erro de validação"
+// @Failure      401 {object} map[string]string "Não autorizado"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/investments [post]
+// @Security     BearerAuth
 func (h *Handler) CreateInvestment(c *gin.Context) {
 	type bodyDTO struct {
 		Type             investment.Types `json:"type" binding:"required"`
@@ -91,6 +104,17 @@ func (h *Handler) CreateInvestment(c *gin.Context) {
 	})
 }
 
+// ListInvestments godoc
+// @Summary      Listar investimentos
+// @Description  Lista todos os investimentos do usuário autenticado
+// @Tags         investments
+// @Accept       json
+// @Produce      json
+// @Success      200 {array} object "Lista de investimentos"
+// @Failure      401 {object} map[string]string "Não autorizado"
+// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Router       /api/investments [get]
+// @Security     BearerAuth
 func (h *Handler) ListInvestments(c *gin.Context) {
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {

@@ -5,14 +5,19 @@ import (
 )
 
 type User struct {
-	Id        string    `gorm:"type:varchar(26);primaryKey"`
-	Name      string    `gorm:"size:100;not null"`
-	Email     string    `gorm:"size:100;uniqueIndex;not null"`
-	Password  string    `gorm:"size:255;not null"`
-	CreatedAt time.Time `gorm:"not null"`
-	UpdatedAt time.Time `gorm:"not null"`
-	Plan      Plan      `gorm:"type:varchar(10);default:'FREE'"`
-	PlanSince time.Time `gorm:"type:timestamp;default:now()"`
+	Id        string    `gorm:"type:varchar(26);primaryKey" json:"id"`
+	Name      string    `gorm:"type:varchar(100);not null" json:"name"`
+	Email     string    `gorm:"type:varchar(100);uniqueIndex:idx_users_email;not null" json:"email"`
+	Password  string    `gorm:"type:varchar(255);not null" json:"-"` // Never expose password in JSON
+	CreatedAt time.Time `gorm:"autoCreateTime;not null" json:"created_at"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime;not null" json:"updated_at"`
+	Plan      Plan      `gorm:"type:varchar(10);default:'FREE';index:idx_users_plan" json:"plan"`
+	PlanSince time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP" json:"plan_since"`
+}
+
+// TableName specifies the table name for User model
+func (User) TableName() string {
+	return "users"
 }
 
 type Plan string
