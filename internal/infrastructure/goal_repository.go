@@ -118,3 +118,17 @@ func (r *GoalRepository) Update(g *goal.Goal) error {
 	gdb := toDBGoal(g)
 	return r.DB.Table("goals").Where("id = ?", gdb.Id).Updates(&gdb).Error
 }
+
+func (r *GoalRepository) UpdateFields(id ulid.ULID, fields map[string]interface{}) error {
+	return r.DB.Table("goals").Where("id = ?", id.String()).Updates(fields).Error
+}
+
+func (r *GoalRepository) CheckGoalBelongsToUser(goalID ulid.ULID, userID ulid.ULID) (bool, error) {
+	var count int64
+	err := r.DB.Table("goals").Where("id = ? AND user_id = ?", goalID.String(), userID.String()).Count(&count).Error
+		
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}
