@@ -2,6 +2,7 @@ package investment
 
 import (
 	"Fynance/internal/domain/transaction"
+	"Fynance/internal/domain/user"
 	"Fynance/internal/utils"
 	"crypto/rand"
 	"errors"
@@ -13,6 +14,7 @@ import (
 type Service struct {
 	Repository      Repository
 	TransactionRepo transaction.Repository
+	UserService     *user.Service
 }
 
 func NewService(repo Repository, transactionRepo transaction.Repository) *Service {
@@ -24,32 +26,24 @@ func NewService(repo Repository, transactionRepo transaction.Repository) *Servic
 
 func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, error) {
 	investmentId := utils.GenerateULIDObject()
-	investment := &Investment{
-		Id:              investmentId,
-		UserId:          req.UserId,
-		Type:            req.Type,
-		Name:            req.Name,
-		CurrentBalance:  req.InitialAmount,
-		ReturnRate:      req.ReturnRate,
-		ApplicationDate: time.Now(),
-		CreatedAt:       time.Now(),
-		UpdatedAt:       time.Now(),
-	}
 
-	if err := s.Repository.Create(investment); err != nil {
+	_, err := s.UserService.GetByID(req.UserId.String())
+	if err != nil {
 		return nil, err
 	}
 
-	transId := utils.GenerateULIDObject()
+	investment, err := s.CreateInvestmentStruct(req, investmentId)
+	if err != nil {
+		return nil, err
+	}
 
-	trans := &transaction.Transaction{
-		Id:           transId,
-		UserId:       req.UserId,
-		Type:         transaction.Investment,
-		Amount:       req.InitialAmount,
-		Description:  "Aporte inicial - " + req.Name,
-		Date:         time.Now(),
-		InvestmentId: &investmentId,
+	if err = s.Repository.Create(investment); err != nil {
+		return nil, err
+	}
+
+	trans, err := s.CreateTransactionStruct(req, investmentId)
+	if err != nil {
+		return nil, err
 	}
 
 	if err := s.TransactionRepo.Create(trans); err != nil {
@@ -189,4 +183,35 @@ func (s *Service) UpdateInvestment(investmentId, userId ulid.ULID, req UpdateInv
 	investment.ReturnRate = req.ReturnRate
 
 	return s.Repository.Update(investment)
+}
+
+func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, InvestmentId ulid.ULID) (*Investment, error) {
+	investment := &Investment{
+		Id:             InvestmentId,
+		UserId:         req.UserId,
+		Type:           Types(req.Type),
+		Name:           req.Name,
+		CurrentBalance: req.InitialAmount,
+		ReturnRate:     req.ReturnRate,
+	}
+	now := utils.SetTimestamps()
+	investment.CreatedAt = now
+	investment.UpdatedAt = now
+	return investment, nil
+}
+
+func (s *Service) CreateTransactionStruct(req CreateInvestmentRequest, InvestmentId ulid.ULID) (*transaction.Transaction, error) {
+	transaction := &transaction.Transaction{
+		Id:           utils.GenerateULIDObject(),
+		UserId:       req.UserId,
+		Type:         transaction.Investment,
+		Amount:       req.InitialAmount,
+		Description:  "Aporte inicial - " + req.Name,
+		Date:         time.Now(),
+		InvestmentId: &InvestmentId,
+	}
+	now := utils.SetTimestamps()
+	transaction.CreatedAt = now
+	transaction.UpdatedAt = now
+	return transaction, nil
 }
