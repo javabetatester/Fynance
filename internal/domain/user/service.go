@@ -2,6 +2,7 @@ package user
 
 import (
 	"Fynance/internal/utils"
+	"errors"
 
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -36,7 +37,11 @@ func (s *Service) Delete(id string) error {
 }
 
 func (s *Service) GetByID(id string) (*User, error) {
-	return s.Repository.GetById(id)
+	user, err := s.Repository.GetById(id)
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+	return user, nil
 }
 
 func (s *Service) GetByEmail(email string) (*User, error) {
