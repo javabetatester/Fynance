@@ -9,19 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// CreateTransaction godoc
-// @Summary      Criar transação
-// @Description  Cria uma nova transação financeira para o usuário autenticado
-// @Tags         transactions
-// @Accept       json
-// @Produce      json
-// @Param        transaction body contracts.TransactionCreateRequest true "Dados da transação"
-// @Success      201 {object} contracts.TransactionCreateResponse "Transação criada com sucesso"
-// @Failure      400 {object} contracts.ErrorResponse "Erro de validação"
-// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
-// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
-// @Router       /api/transactions [post]
-// @Security     BearerAuth
 func (h *Handler) CreateTransaction(c *gin.Context) {
 	var body contracts.TransactionCreateRequest
 
@@ -62,17 +49,6 @@ func (h *Handler) CreateTransaction(c *gin.Context) {
 	})
 }
 
-// GetTransactions godoc
-// @Summary      Listar transações
-// @Description  Lista todas as transações do usuário autenticado
-// @Tags         transactions
-// @Accept       json
-// @Produce      json
-// @Success      200 {array} transaction.Transaction "Lista de transações"
-// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
-// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
-// @Router       /api/transactions [get]
-// @Security     BearerAuth
 func (h *Handler) GetTransactions(c *gin.Context) {
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {

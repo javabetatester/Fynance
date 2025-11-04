@@ -23,7 +23,11 @@ func (s *Service) CreateTransaction(transaction *Transaction) error {
 
 	TransactionCreateStruct(transaction)
 
-	return s.Repository.Create(transaction)
+	if err := s.Repository.Create(transaction); err != nil {
+		return errors.New("failed to create transaction")
+	}
+
+	return nil
 }
 
 func (s *Service) UpdateTransaction(transaction *Transaction) error {
@@ -63,13 +67,12 @@ func (s *Service) GetTransactionsByCategory(categoryID ulid.ULID, userID ulid.UL
 
 // CATEGORYS
 func (s *Service) CreateCategory(category *Category) error {
+
 	if err := s.CategoryExists(category.Name, category.UserId); err != nil {
 		return err
 	}
 
-	category.Id = utils.GenerateULIDObject()
-	category.CreatedAt = time.Now()
-	category.UpdatedAt = time.Now()
+	CategoryCreateStruct(category)
 
 	return s.CategoryRepository.Create(category)
 }
@@ -147,6 +150,12 @@ func TransactionCreateStruct(transaction *Transaction) {
 	now := utils.SetTimestamps()
 	transaction.CreatedAt = now
 	transaction.UpdatedAt = now
+}
+
+func CategoryCreateStruct(category *Category) {
+	category.Id = utils.GenerateULIDObject()
+	category.CreatedAt = time.Now()
+	category.UpdatedAt = time.Now()
 }
 
 func (s *Service) UpdateTransactionValidation(transaction *Transaction) error {

@@ -787,52 +787,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/users": {
-            "post": {
-                "description": "Cria um novo usuário no sistema",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "users"
-                ],
-                "summary": "Criar usuário",
-                "parameters": [
-                    {
-                        "description": "Dados do usuário",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/Fynance_internal_contracts.UserCreateRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Usuário criado com sucesso",
-                        "schema": {
-                            "$ref": "#/definitions/Fynance_internal_contracts.MessageResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Erro de validação",
-                        "schema": {
-                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Erro interno do servidor",
-                        "schema": {
-                            "$ref": "#/definitions/Fynance_internal_contracts.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
+
         "/users/email": {
             "get": {
                 "security": [
