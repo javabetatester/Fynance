@@ -86,13 +86,6 @@ func main() {
 	private.Use(middleware.AuthMiddleware(jwtService))
 	private.Use(middleware.RequireOwnership())
 	{
-		users := private.Group("/users")
-		{
-			users.GET("/:id", handler.GetUserByID)
-			users.GET("/email", handler.GetUserByEmail)
-			users.PUT("/:id", handler.UpdateUser)
-			users.DELETE("/:id", handler.DeleteUser)
-		}
 
 		goals := private.Group("/goals")
 		{
