@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -22,16 +23,16 @@ func RequireOwnership() gin.HandlerFunc {
 
 		hasValidation := false
 
-		// idFromURL := c.Param("id")
-		// if idFromURL != "" {
+		idFromURL := c.Param("id")
+		if idFromURL != "" {
 
-		// 	if !strings.EqualFold(tokenUserID, idFromURL) {
-		// 		c.JSON(http.StatusForbidden, gin.H{"error": "You can only access your own resources"})
-		// 		c.Abort()
-		// 		return
-		// 	}
-		// 	hasValidation = true
-		// }
+			if !strings.EqualFold(tokenUserID, idFromURL) {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Resource not found"})
+				c.Abort()
+				return
+			}
+			hasValidation = true
+		}
 
 		if c.Request.Body != nil {
 			bodyBytes, err := io.ReadAll(c.Request.Body)
@@ -78,7 +79,7 @@ func RequireOwnership() gin.HandlerFunc {
 					}
 
 					if tokenUserID != idStr {
-						c.JSON(http.StatusForbidden, gin.H{"error": "You can only modify your own resources"})
+						c.JSON(http.StatusNotFound, gin.H{"error": "Resource not found"})
 						c.Abort()
 						return
 					}
