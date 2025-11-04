@@ -46,7 +46,6 @@ func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, er
 		Id:           transId,
 		UserId:       req.UserId,
 		Type:         transaction.Investment,
-		CategoryId:   req.CategoryId,
 		Amount:       req.InitialAmount,
 		Description:  "Aporte inicial - " + req.Name,
 		Date:         time.Now(),
@@ -61,7 +60,7 @@ func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, er
 	return investment, nil
 }
 
-func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float64, categoryId ulid.ULID, description string) error {
+func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float64, description string) error {
 	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
 	if err != nil {
 		return errors.New("investment not found")
@@ -73,7 +72,6 @@ func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float6
 		Id:           transId,
 		UserId:       userId,
 		Type:         transaction.Investment,
-		CategoryId:   categoryId,
 		Amount:       amount,
 		Description:  description,
 		Date:         time.Now(),
@@ -88,7 +86,7 @@ func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float6
 	return s.Repository.Update(investment)
 }
 
-func (s *Service) MakeWithdraw(investmentId, userId ulid.ULID, amount float64, categoryId ulid.ULID, description string) error {
+func (s *Service) MakeWithdraw(investmentId, userId ulid.ULID, amount float64, description string) error {
 	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
 	if err != nil {
 		return errors.New("investment not found")
@@ -105,7 +103,6 @@ func (s *Service) MakeWithdraw(investmentId, userId ulid.ULID, amount float64, c
 		Id:           transId,
 		UserId:       userId,
 		Type:         transaction.Withdraw,
-		CategoryId:   categoryId,
 		Amount:       amount,
 		Description:  description,
 		Date:         time.Now(),
@@ -179,4 +176,17 @@ func (s *Service) DeleteInvestment(investmentId, userId ulid.ULID) error {
 	}
 
 	return s.Repository.Delete(investmentId, userId)
+}
+
+func (s *Service) UpdateInvestment(investmentId, userId ulid.ULID, req UpdateInvestmentRequest) error {
+	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
+	if err != nil {
+		return err
+	}
+
+	investment.Name = req.Name
+	investment.Type = Types(req.Type)
+	investment.ReturnRate = req.ReturnRate
+
+	return s.Repository.Update(investment)
 }

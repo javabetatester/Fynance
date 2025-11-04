@@ -1,12 +1,15 @@
 package routes
 
 import (
-	"Fynance/internal/domain/investment"
-	"Fynance/internal/utils"
+	"errors"
 	"net/http"
 
+	"Fynance/internal/contracts"
+	"Fynance/internal/domain/investment"
+	"Fynance/internal/utils"
+
 	"github.com/gin-gonic/gin"
-	"github.com/oklog/ulid/v2"
+	"gorm.io/gorm"
 )
 
 // CreateInvestment godoc
@@ -15,92 +18,43 @@ import (
 // @Tags         investments
 // @Accept       json
 // @Produce      json
-// @Param        investment body object true "Dados do investimento"
-// @Success      201 {object} object "Investimento criado com sucesso"
-// @Failure      400 {object} map[string]string "Erro de validação"
-// @Failure      401 {object} map[string]string "Não autorizado"
-// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Param        investment body contracts.InvestmentCreateRequest true "Dados do investimento"
+// @Success      201 {object} contracts.InvestmentCreateResponse "Investimento criado com sucesso"
+// @Failure      400 {object} contracts.ErrorResponse "Erro de validação"
+// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
+// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
 // @Router       /api/investments [post]
 // @Security     BearerAuth
 func (h *Handler) CreateInvestment(c *gin.Context) {
-	type bodyDTO struct {
-		Type             investment.Types `json:"type" binding:"required"`
-		Name             string           `json:"name" binding:"required"`
-		InitialAmount    float64          `json:"initial_amount"`
-		InitialAmountAlt float64          `json:"initialAmount"`
-		ReturnRate       float64          `json:"return_rate"`
-		ReturnRateAlt    float64          `json:"returnRate"`
-		CategoryId       string           `json:"category_id"`
-		CategoryIdAlt    string           `json:"categoryId"`
-	}
-
-	var body bodyDTO
+	var body contracts.InvestmentCreateRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
-	}
-
-	initial := body.InitialAmount
-	if initial == 0 && body.InitialAmountAlt != 0 {
-		initial = body.InitialAmountAlt
-	}
-	if initial <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "initial amount must be greater than 0"})
-		return
-	}
-
-	ret := body.ReturnRate
-	if ret == 0 && body.ReturnRateAlt != 0 {
-		ret = body.ReturnRateAlt
-	}
-
-	catIDStr := body.CategoryId
-	if catIDStr == "" {
-		catIDStr = body.CategoryIdAlt
-	}
-	var categoryID ulid.ULID
-	if catIDStr == "" {
-		categoryID, err = h.TransactionService.EnsureDefaultInvestmentCategory(userID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-	} else {
-		categoryID, err = utils.ParseULID(catIDStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid category id"})
-			return
-		}
-		if errs := h.TransactionService.CategoryValidation(categoryID, userID); errs != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": errs.Error()})
-			return
-		}
 	}
 
 	req := investment.CreateInvestmentRequest{
 		UserId:        userID,
-		Type:          body.Type,
+		Type:          investment.Types(body.Type),
 		Name:          body.Name,
-		InitialAmount: initial,
-		ReturnRate:    ret,
-		CategoryId:    categoryID,
+		InitialAmount: body.InitialAmount,
+		ReturnRate:    body.ReturnRate,
 	}
 
 	inv, err := h.InvestmentService.CreateInvestment(req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{
-		"message":    "Investment created successfully",
-		"investment": inv,
+	c.JSON(http.StatusCreated, contracts.InvestmentCreateResponse{
+		Message:    "Investimento criado com sucesso",
+		Investment: *inv,
 	})
 }
 
@@ -110,169 +64,274 @@ func (h *Handler) CreateInvestment(c *gin.Context) {
 // @Tags         investments
 // @Accept       json
 // @Produce      json
-// @Success      200 {array} object "Lista de investimentos"
-// @Failure      401 {object} map[string]string "Não autorizado"
-// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Success      200 {object} contracts.InvestmentListResponse "Lista de investimentos"
+// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
+// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
 // @Router       /api/investments [get]
 // @Security     BearerAuth
 func (h *Handler) ListInvestments(c *gin.Context) {
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	investments, err := h.InvestmentService.ListInvestments(userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"investments": investments,
-		"total":       len(investments),
+	c.JSON(http.StatusOK, contracts.InvestmentListResponse{
+		Total:       len(investments),
+		Investments: investments,
 	})
 }
 
+// GetInvestment godoc
+// @Summary      Obter investimento
+// @Description  Recupera os dados de um investimento específico do usuário autenticado
+// @Tags         investments
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "ID do investimento"
+// @Success      200 {object} contracts.InvestmentSingleResponse "Dados do investimento"
+// @Failure      400 {object} contracts.ErrorResponse "ID inválido"
+// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
+// @Failure      404 {object} contracts.ErrorResponse "Investimento não encontrado"
+// @Router       /api/investments/{id} [get]
+// @Security     BearerAuth
 func (h *Handler) GetInvestment(c *gin.Context) {
 	investmentID, err := utils.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid investment id"})
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	inv, err := h.InvestmentService.GetInvestment(investmentID, userID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "investment not found"})
+		c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"investment": inv,
-	})
+	c.JSON(http.StatusOK, contracts.InvestmentSingleResponse{Investment: inv})
 }
 
+// MakeContribution godoc
+// @Summary      Realizar aporte
+// @Description  Registra um aporte financeiro em um investimento existente
+// @Tags         investments
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "ID do investimento"
+// @Param        contribution body contracts.InvestmentContributionRequest true "Dados do aporte"
+// @Success      200 {object} contracts.MessageResponse "Aporte registrado"
+// @Failure      400 {object} contracts.ErrorResponse "Dados inválidos"
+// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
+// @Failure      404 {object} contracts.ErrorResponse "Investimento não encontrado"
+// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
+// @Router       /api/investments/{id}/contribution [post]
+// @Security     BearerAuth
 func (h *Handler) MakeContribution(c *gin.Context) {
 	investmentID, err := utils.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid investment id"})
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	var req investment.ContributionRequest
-	if errs := c.ShouldBindJSON(&req); errs != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errs.Error()})
+	var body contracts.InvestmentContributionRequest
+	if errs := c.ShouldBindJSON(&body); errs != nil {
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: errs.Error()})
 		return
 	}
 
-	// if errs := h.TransactionService.CategoryValidation(req.CategoryId, userID); errs != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": errs.Error()})
-	// 	return
-	// }
-
-	err = h.InvestmentService.MakeContribution(investmentID, userID, req.Amount, req.CategoryId, req.Description)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.InvestmentService.MakeContribution(investmentID, userID, body.Amount, body.Description); err != nil {
+		if err.Error() == "investment not found" {
+			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Contribution made successfully",
-	})
+	c.JSON(http.StatusOK, contracts.MessageResponse{Message: "Aporte registrado com sucesso"})
 }
 
+// MakeWithdraw godoc
+// @Summary      Realizar resgate
+// @Description  Registra um resgate financeiro de um investimento existente
+// @Tags         investments
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "ID do investimento"
+// @Param        withdraw body contracts.InvestmentWithdrawRequest true "Dados do resgate"
+// @Success      200 {object} contracts.MessageResponse "Resgate realizado"
+// @Failure      400 {object} contracts.ErrorResponse "Dados inválidos"
+// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
+// @Failure      404 {object} contracts.ErrorResponse "Investimento não encontrado"
+// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
+// @Router       /api/investments/{id}/withdraw [post]
+// @Security     BearerAuth
 func (h *Handler) MakeWithdraw(c *gin.Context) {
 	investmentID, err := utils.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid investment id"})
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	var req investment.WithdralRequest
-	if errs := c.ShouldBindJSON(&req); errs != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": errs.Error()})
+	var body contracts.InvestmentWithdrawRequest
+	if errs := c.ShouldBindJSON(&body); errs != nil {
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: errs.Error()})
 		return
 	}
 
-	// if errs := h.TransactionService.CategoryValidation(req.CategoryId, userID); errs != nil {
-	// 	c.JSON(http.StatusBadRequest, gin.H{"error": errs.Error()})
-	// 	return
-	// }
-
-	err = h.InvestmentService.MakeWithdraw(investmentID, userID, req.Amount, req.CategoryId, req.Description)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	if err := h.InvestmentService.MakeWithdraw(investmentID, userID, body.Amount, body.Description); err != nil {
+		if err.Error() == "investment not found" {
+			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Withdraw made successfully",
-	})
+	c.JSON(http.StatusOK, contracts.MessageResponse{Message: "Resgate realizado com sucesso"})
 }
 
+// GetInvestmentReturn godoc
+// @Summary      Calcular retorno de investimento
+// @Description  Obtém lucro absoluto e percentual acumulado do investimento
+// @Tags         investments
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "ID do investimento"
+// @Success      200 {object} contracts.InvestmentReturnResponse "Retorno calculado"
+// @Failure      400 {object} contracts.ErrorResponse "ID inválido"
+// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
+// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
+// @Router       /api/investments/{id}/return [get]
+// @Security     BearerAuth
 func (h *Handler) GetInvestmentReturn(c *gin.Context) {
 	investmentID, err := utils.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid investment id"})
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	profit, returnPercentage, err := h.InvestmentService.CalculateReturn(investmentID, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"profit":            profit,
-		"return_percentage": returnPercentage,
+	c.JSON(http.StatusOK, contracts.InvestmentReturnResponse{
+		Profit:           profit,
+		ReturnPercentage: returnPercentage,
 	})
 }
 
+// DeleteInvestment godoc
+// @Summary      Excluir investimento
+// @Description  Remove um investimento do usuário quando não há saldo pendente
+// @Tags         investments
+// @Accept       json
+// @Produce      json
+// @Param        id path string true "ID do investimento"
+// @Success      200 {object} contracts.MessageResponse "Investimento excluído"
+// @Failure      400 {object} contracts.ErrorResponse "Requisição inválida"
+// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
+// @Failure      404 {object} contracts.ErrorResponse "Investimento não encontrado"
+// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
+// @Router       /api/investments/{id} [delete]
+// @Security     BearerAuth
 func (h *Handler) DeleteInvestment(c *gin.Context) {
 	investmentID, err := utils.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid investment id"})
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	err = h.InvestmentService.DeleteInvestment(investmentID, userID)
+	if err := h.InvestmentService.DeleteInvestment(investmentID, userID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "investment not found" {
+			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
+			return
+		}
+		if err.Error() == "cannot delete investment with balance" {
+			c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "não é possível excluir investimento com saldo"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, contracts.MessageResponse{Message: "Investimento excluído com sucesso"})
+}
+
+func (h *Handler) UpdateInvestment(c *gin.Context) {
+	investmentID, err := utils.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Investment deleted successfully",
-	})
+	userID, err := h.GetUserIDFromContext(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	var body contracts.InvestimentUpdateRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	updateReq := investment.UpdateInvestmentRequest{
+		UserId:        userID,
+		Id:            investmentID,
+		Name:          body.Name,
+		Type:          body.Type,
+		InitialAmount: body.InitialAmount,
+		ReturnRate:    body.ReturnRate,
+	}
+
+	if err := h.InvestmentService.UpdateInvestment(investmentID, userID, updateReq); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "investment not found" {
+			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, contracts.MessageResponse{Message: "Investimento atualizado com sucesso"})
 }
