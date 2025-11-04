@@ -4,7 +4,6 @@ import (
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
 	"Fynance/internal/utils"
-	"crypto/rand"
 	"errors"
 	"time"
 
@@ -60,16 +59,9 @@ func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float6
 		return errors.New("investment not found")
 	}
 
-	transId := utils.GenerateULIDObject()
-
-	trans := &transaction.Transaction{
-		Id:           transId,
-		UserId:       userId,
-		Type:         transaction.Investment,
-		Amount:       amount,
-		Description:  description,
-		Date:         time.Now(),
-		InvestmentId: &investmentId,
+	trans, err := s.MakeWithdrawAndContributionStruct(investmentId, userId, amount, description)
+	if err != nil {
+		return err
 	}
 
 	if err := s.TransactionRepo.Create(trans); err != nil {
@@ -90,17 +82,9 @@ func (s *Service) MakeWithdraw(investmentId, userId ulid.ULID, amount float64, d
 		return errors.New("insufficient balance in investment")
 	}
 
-	entropy := ulid.Monotonic(rand.Reader, 0)
-	transId := ulid.MustNew(ulid.Timestamp(time.Now()), entropy)
-
-	trans := &transaction.Transaction{
-		Id:           transId,
-		UserId:       userId,
-		Type:         transaction.Withdraw,
-		Amount:       amount,
-		Description:  description,
-		Date:         time.Now(),
-		InvestmentId: &investmentId,
+	trans, err := s.MakeWithdrawAndContributionStruct(investmentId, userId, amount, description)
+	if err != nil {
+		return err
 	}
 
 	if err := s.TransactionRepo.Create(trans); err != nil {
@@ -201,6 +185,7 @@ func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, Investment
 }
 
 func (s *Service) CreateTransactionStruct(req CreateInvestmentRequest, InvestmentId ulid.ULID) (*transaction.Transaction, error) {
+
 	transaction := &transaction.Transaction{
 		Id:           utils.GenerateULIDObject(),
 		UserId:       req.UserId,
@@ -209,6 +194,22 @@ func (s *Service) CreateTransactionStruct(req CreateInvestmentRequest, Investmen
 		Description:  "Aporte inicial - " + req.Name,
 		Date:         time.Now(),
 		InvestmentId: &InvestmentId,
+	}
+	now := utils.SetTimestamps()
+	transaction.CreatedAt = now
+	transaction.UpdatedAt = now
+	return transaction, nil
+}
+
+func (s *Service) MakeWithdrawAndContributionStruct(investmentId, userId ulid.ULID, amount float64, description string) (*transaction.Transaction, error) {
+	transaction := &transaction.Transaction{
+		Id:           utils.GenerateULIDObject(),
+		UserId:       userId,
+		Type:         transaction.Investment,
+		Amount:       amount,
+		Description:  description,
+		Date:         time.Now(),
+		InvestmentId: &investmentId,
 	}
 	now := utils.SetTimestamps()
 	transaction.CreatedAt = now
