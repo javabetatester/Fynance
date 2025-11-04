@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/utils"
+	"time"
 
 	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
@@ -13,10 +14,12 @@ type TransactionCategoryRepository struct {
 }
 
 type categoryDB struct {
-	UserId string `gorm:"type:varchar(26);index;not null"`
-	Id     string `gorm:"type:varchar(26);primaryKey"`
-	Name   string `gorm:"size:100;not null"`
-	Icon   string `gorm:"size:50"`
+	UserId    string    `gorm:"type:varchar(26);index;not null"`
+	Id        string    `gorm:"type:varchar(26);primaryKey"`
+	Name      string    `gorm:"size:100;not null"`
+	Icon      string    `gorm:"size:50"`
+	CreatedAt time.Time `gorm:"type:timestamp;"`
+	UpdatedAt time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"`
 }
 
 func toDomainCategory(cdb *categoryDB) (*transaction.Category, error) {
@@ -29,19 +32,23 @@ func toDomainCategory(cdb *categoryDB) (*transaction.Category, error) {
 		return nil, err
 	}
 	return &transaction.Category{
-		UserId: uid,
-		Id:     id,
-		Name:   cdb.Name,
-		Icon:   cdb.Icon,
+		UserId:    uid,
+		Id:        id,
+		Name:      cdb.Name,
+		Icon:      cdb.Icon,
+		CreatedAt: cdb.CreatedAt,
+		UpdatedAt: cdb.UpdatedAt,
 	}, nil
 }
 
 func toDBCategory(c *transaction.Category) *categoryDB {
 	return &categoryDB{
-		UserId: c.UserId.String(),
-		Id:     c.Id.String(),
-		Name:   c.Name,
-		Icon:   c.Icon,
+		UserId:    c.UserId.String(),
+		Id:        c.Id.String(),
+		Name:      c.Name,
+		Icon:      c.Icon,
+		CreatedAt: c.CreatedAt,
+		UpdatedAt: c.UpdatedAt,
 	}
 }
 

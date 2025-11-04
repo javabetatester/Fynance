@@ -3,6 +3,7 @@ package transaction
 import (
 	"Fynance/internal/utils"
 	"errors"
+	"time"
 
 	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
@@ -14,25 +15,25 @@ type Service struct {
 }
 
 func (s *Service) CreateTransaction(transaction *Transaction) error {
-	_, err := s.CategoryRepository.GetByID(transaction.CategoryId, transaction.UserId)
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return errors.New("category does not exist")
-	}
-
+	err := s.CategoryValidation(transaction.CategoryId, transaction.UserId)
 	if err != nil {
 		return err
 	}
 
-	transaction.Id = ulid.MustNew(ulid.Timestamp(utils.SetTimestamps()), ulid.DefaultEntropy())
-	now := utils.SetTimestamps()
-	transaction.CreatedAt = now
-	transaction.UpdatedAt = now
+	TransactionCreateStruct(transaction)
 
 	return s.Repository.Create(transaction)
 }
 
 func (s *Service) UpdateTransaction(transaction *Transaction) error {
+	transaction.UpdatedAt = time.Now()
+
+	err := s.UpdateTransactionValidation(transaction)
+	if err != nil {
+		return err
+	}
+
 	return s.Repository.Update(transaction)
 }
 
@@ -66,7 +67,9 @@ func (s *Service) CreateCategory(category *Category) error {
 		return err
 	}
 
-	category.Id = ulid.MustNew(ulid.Timestamp(utils.SetTimestamps()), ulid.DefaultEntropy())
+	category.Id = utils.GenerateULIDObject()
+	category.CreatedAt = time.Now()
+	category.UpdatedAt = time.Now()
 
 	return s.CategoryRepository.Create(category)
 }
@@ -137,4 +140,28 @@ func (s *Service) EnsureDefaultInvestmentCategory(userID ulid.ULID) (ulid.ULID, 
 
 func (s *Service) GetNumberOfTransactions(userID ulid.ULID) (int64, error) {
 	return s.Repository.GetNumberOfTransactions(userID)
+}
+
+func TransactionCreateStruct(transaction *Transaction) {
+	transaction.Id = utils.GenerateULIDObject()
+	now := utils.SetTimestamps()
+	transaction.CreatedAt = now
+	transaction.UpdatedAt = now
+}
+
+func (s *Service) UpdateTransactionValidation(transaction *Transaction) error {
+
+	if transaction.Amount < 0 {
+		return errors.New("amount must be greater than 0")
+	}
+
+	_, err := s.GetCategoryByID(transaction.CategoryId, transaction.UserId)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return errors.New("category does not exist")
+	}
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"Fynance/internal/contracts"
 	"Fynance/internal/domain/transaction"
 	"net/http"
 
@@ -13,31 +14,36 @@ import (
 // @Tags         categories
 // @Accept       json
 // @Produce      json
-// @Param        category body object true "Dados da categoria"
-// @Success      201 {string} string "Categoria criada com sucesso"
-// @Failure      400 {object} map[string]string "Erro de validação"
-// @Failure      401 {object} map[string]string "Não autorizado"
-// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Param        category body contracts.CategoryCreateRequest true "Dados da categoria"
+// @Success      201 {object} contracts.MessageResponse "Categoria criada com sucesso"
+// @Failure      400 {object} contracts.ErrorResponse "Erro de validação"
+// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
+// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
 // @Router       /api/categories [post]
 // @Security     BearerAuth
 func (h *Handler) CreateCategory(c *gin.Context) {
-	var category transaction.Category
-	if err := c.ShouldBindJSON(&category); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var body contracts.CategoryCreateRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-	category.UserId = userID
+	category := transaction.Category{
+		UserId: userID,
+		Name:   body.Name,
+		Icon:   body.Icon,
+	}
 
 	if err := h.TransactionService.CreateCategory(&category); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, "Category created with success")
+
+	c.JSON(http.StatusCreated, contracts.MessageResponse{Message: "Categoria criada com sucesso"})
 }
