@@ -1,6 +1,7 @@
 package transaction
 
 import (
+	"Fynance/internal/domain/user"
 	"Fynance/internal/utils"
 	"errors"
 	"time"
@@ -12,6 +13,7 @@ import (
 type Service struct {
 	Repository         Repository
 	CategoryRepository CategoryRepository
+	UserService        *user.Service
 }
 
 func (s *Service) CreateTransaction(transaction *Transaction) error {
@@ -38,10 +40,19 @@ func (s *Service) UpdateTransaction(transaction *Transaction) error {
 		return err
 	}
 
-	return s.Repository.Update(transaction)
+	err = s.Repository.Update(transaction)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) DeleteTransaction(transactionID ulid.ULID) error {
+	err := s.TransactionExists(transactionID)
+	if err != nil {
+		return err
+	}
 	return s.Repository.Delete(transactionID)
 }
 
@@ -66,6 +77,7 @@ func (s *Service) GetTransactionsByCategory(categoryID ulid.ULID, userID ulid.UL
 }
 
 // CATEGORYS
+
 func (s *Service) CreateCategory(category *Category) error {
 
 	if err := s.CategoryExists(category.Name, category.UserId); err != nil {
@@ -82,14 +94,30 @@ func (s *Service) UpdateCategory(category *Category) error {
 }
 
 func (s *Service) DeleteCategory(categoryID ulid.ULID, userID ulid.ULID) error {
+	_, err := s.GetCategoryByID(categoryID, userID)
+	if err != nil {
+		return err
+	}
 	return s.CategoryRepository.Delete(categoryID, userID)
 }
 
 func (s *Service) GetCategoryByID(categoryID ulid.ULID, userID ulid.ULID) (*Category, error) {
-	return s.CategoryRepository.GetByID(categoryID, userID)
+	_, err := s.UserService.GetByID(userID.String())
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
+	_, err = s.CategoryRepository.GetByID(categoryID, userID)
+	if err != nil {
+		return nil, errors.New("category not found")
+	}
+	return nil, err
 }
 
 func (s *Service) GetAllCategories(userID ulid.ULID) ([]*Category, error) {
+	_, err := s.UserService.GetByID(userID.String())
+	if err != nil {
+		return nil, errors.New("user not found")
+	}
 	return s.CategoryRepository.GetAll(userID)
 }
 
@@ -119,26 +147,6 @@ func (s *Service) CategoryValidation(categoryId ulid.ULID, userID ulid.ULID) err
 	}
 
 	return nil
-}
-
-func (s *Service) EnsureDefaultInvestmentCategory(userID ulid.ULID) (ulid.ULID, error) {
-	const defaultName = "Investment"
-	cat, err := s.CategoryRepository.GetByName(defaultName, userID)
-	if err == nil {
-		return cat.Id, nil
-	}
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		c := &Category{
-			UserId: userID,
-			Name:   defaultName,
-		}
-		c.Id = ulid.MustNew(ulid.Timestamp(utils.SetTimestamps()), ulid.DefaultEntropy())
-		if errs := s.CategoryRepository.Create(c); errs != nil {
-			return ulid.ULID{}, errs
-		}
-		return c.Id, nil
-	}
-	return ulid.ULID{}, err
 }
 
 func (s *Service) GetNumberOfTransactions(userID ulid.ULID) (int64, error) {
@@ -172,5 +180,16 @@ func (s *Service) UpdateTransactionValidation(transaction *Transaction) error {
 		return err
 	}
 
+	return nil
+}
+
+func (s *Service) TransactionExists(transactionID ulid.ULID) error {
+	_, err := s.GetTransactionByID(transactionID)
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return errors.New("transaction does not exist")
+	}
+	if err != nil {
+		return err
+	}
 	return nil
 }
