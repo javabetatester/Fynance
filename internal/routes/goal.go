@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"Fynance/internal/contracts"
 	"Fynance/internal/domain/goal"
 	"Fynance/internal/utils"
 	"net/http"
@@ -14,32 +15,39 @@ import (
 // @Tags         goals
 // @Accept       json
 // @Produce      json
-// @Param        goal body object true "Dados da meta"
-// @Success      201 {string} string "Meta criada com sucesso"
-// @Failure      400 {object} map[string]string "Erro de validação"
-// @Failure      401 {object} map[string]string "Não autorizado"
-// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Param        goal body contracts.GoalCreateRequest true "Dados da meta"
+// @Success      201 {object} contracts.MessageResponse "Meta criada com sucesso"
+// @Failure      400 {object} contracts.ErrorResponse "Erro de validação"
+// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
+// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
 // @Router       /api/goals [post]
 // @Security     BearerAuth
 func (h *Handler) CreateGoal(c *gin.Context) {
-	var goal goal.GoalCreateRequest
-	if err := c.ShouldBindJSON(&goal); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var body contracts.GoalCreateRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-    userID, err := h.GetUserIDFromContext(c)
+	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
-    goal.UserId = userID
 
-	if err := h.GoalService.CreateGoal(&goal); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	req := goal.GoalCreateRequest{
+		UserId:  userID,
+		Name:    body.Name,
+		Target:  body.Target,
+		EndedAt: body.EndAt,
+	}
+
+	if err := h.GoalService.CreateGoal(&req); err != nil {
+		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, "Goal created with success")
+
+	c.JSON(http.StatusCreated, contracts.MessageResponse{Message: "Meta criada com sucesso"})
 }
 
 // UpdateGoal godoc
@@ -49,42 +57,50 @@ func (h *Handler) CreateGoal(c *gin.Context) {
 // @Accept       json
 // @Produce      json
 // @Param        id path string true "ID da meta"
-// @Param        goal body object true "Dados atualizados da meta"
-// @Success      200 {string} string "Meta atualizada com sucesso"
-// @Failure      400 {object} map[string]string "Erro de validação"
-// @Failure      401 {object} map[string]string "Não autorizado"
-// @Failure      500 {object} map[string]string "Erro interno do servidor"
+// @Param        goal body contracts.GoalUpdateRequest true "Dados atualizados da meta"
+// @Success      200 {object} contracts.MessageResponse "Meta atualizada com sucesso"
+// @Failure      400 {object} contracts.ErrorResponse "Erro de validação"
+// @Failure      401 {object} contracts.ErrorResponse "Não autorizado"
+// @Failure      500 {object} contracts.ErrorResponse "Erro interno do servidor"
 // @Router       /api/goals/{id} [patch]
 // @Security     BearerAuth
 func (h *Handler) UpdateGoal(c *gin.Context) {
-	var goal goal.GoalUpdateRequest
-	if err := c.ShouldBindJSON(&goal); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	var body contracts.GoalUpdateRequest
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
-    userID, err := h.GetUserIDFromContext(c)
+	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
-    goal.UserId = userID
 
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "id is required"})
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id é obrigatório"})
 		return
 	}
 
-	goal.Id, err = utils.ParseULID(id)
+	goalID, err := utils.ParseULID(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
-	
-	if err := h.GoalService.UpdateGoal(&goal); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+
+	req := goal.GoalUpdateRequest{
+		Id:      goalID,
+		UserId:  userID,
+		Name:    body.Name,
+		Target:  body.Target,
+		EndedAt: body.EndAt,
+	}
+
+	if err := h.GoalService.UpdateGoal(&req); err != nil {
+		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
-	c.JSON(http.StatusCreated, "Goal created with success")
+
+	c.JSON(http.StatusOK, contracts.MessageResponse{Message: "Meta atualizada com sucesso"})
 }
