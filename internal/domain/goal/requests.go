@@ -10,7 +10,6 @@ type GoalCreateRequest struct {
 	UserId     ulid.ULID  `json:"user_id"`
 	Name       string     `json:"name"`
 	Target     float64    `json:"target"`
-	CategoryId string     `json:"category_id"`
 	EndedAt    *time.Time `json:"end_at"` // Nullable
 }
 
@@ -19,7 +18,6 @@ type GoalUpdateRequest struct {
 	UserId     ulid.ULID  `json:"user_id"`
 	Name       string     `json:"name"`
 	Target     float64    `json:"target"`
-	CategoryId string     `json:"category_id"`
 	EndedAt    *time.Time `json:"end_at"` // Nullable
 }
 

@@ -45,12 +45,17 @@ func (s *Service) UpdateGoal(goal *GoalUpdateRequest) error {
 		return err
 	}
 
-	return s.Repository.UpdateFields(goal.Id, map[string]interface{}{
-		"name":          goal.Name,
-		"target_amount": goal.Target,
-		"ended_at":      goal.EndedAt,
-		"updated_at":    time.Now(),
-	})
+	goalEntity := &Goal{
+		Id:            goal.Id,
+		UserId:        goal.UserId,
+		Name:          goal.Name,
+		TargetAmount:  goal.Target,
+		EndedAt:       goal.EndedAt,
+		Status:        Active,
+		UpdatedAt:     time.Now(),
+	}
+
+	return s.Repository.Update(goalEntity)
 }
 
 func (s *Service) DeleteGoal(id ulid.ULID) error {
