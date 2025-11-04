@@ -1537,32 +1537,6 @@ const docTemplate = `{
                 "PlanBasic",
                 "PlanPro"
             ]
-        },
-        "Fynance_internal_domain_user.User": {
-            "type": "object",
-            "properties": {
-                "created_at": {
-                    "type": "string"
-                },
-                "email": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "plan": {
-                    "$ref": "#/definitions/Fynance_internal_domain_user.Plan"
-                },
-                "plan_since": {
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
         }
     },
     "securityDefinitions": {
