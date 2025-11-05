@@ -20,15 +20,23 @@ func (s *Service) CreateGoal(goal *GoalCreateRequest) error {
 		return err
 	}
 
+	if _, err := s.UserService.GetByID(goal.UserId.String()); err != nil {
+		return fmt.Errorf("user not found")
+	}
+
+	now := time.Now()
+
 	goalEntity := &Goal{
 		Id:            utils.GenerateULIDObject(),
 		UserId:        goal.UserId,
 		Name:          goal.Name,
 		TargetAmount:  goal.Target,
-		CurrentAmount: goal.Target,
-		StartedAt:     time.Now(),
+		CurrentAmount: 0,
+		StartedAt:     now,
 		EndedAt:       goal.EndedAt,
 		Status:        Active,
+		CreatedAt:     now,
+		UpdatedAt:     now,
 	}
 
 	return s.Repository.Create(goalEntity)
@@ -45,25 +53,38 @@ func (s *Service) UpdateGoal(goal *GoalUpdateRequest) error {
 		return err
 	}
 
-	goalEntity := &Goal{
-		Id:            goal.Id,
-		UserId:        goal.UserId,
-		Name:          goal.Name,
-		TargetAmount:  goal.Target,
-		EndedAt:       goal.EndedAt,
-		Status:        Active,
-		UpdatedAt:     time.Now(),
+	currentGoal, err := s.Repository.GetById(goal.Id)
+	if err != nil {
+		return err
 	}
 
-	return s.Repository.Update(goalEntity)
+	currentGoal.Name = goal.Name
+	currentGoal.TargetAmount = goal.Target
+	currentGoal.EndedAt = goal.EndedAt
+	currentGoal.UpdatedAt = time.Now()
+
+	return s.Repository.Update(currentGoal)
 }
 
-func (s *Service) DeleteGoal(id ulid.ULID) error {
-	return s.Repository.Delete(id)
+func (s *Service) DeleteGoal(goalID ulid.ULID, userID ulid.ULID) error {
+	if err := s.CheckGoalBelongsToUser(goalID, userID); err != nil {
+		return err
+	}
+
+	return s.Repository.Delete(goalID)
 }
 
-func (s *Service) GetGoalByID(id ulid.ULID) (*Goal, error) {
-	return s.Repository.GetById(id)
+func (s *Service) GetGoalByID(goalID ulid.ULID, userID ulid.ULID) (*Goal, error) {
+	goal, err := s.Repository.GetById(goalID)
+	if err != nil {
+		return nil, err
+	}
+
+	if goal.UserId != userID {
+		return nil, fmt.Errorf("goal does not belong to user")
+	}
+
+	return goal, nil
 }
 
 func (s *Service) GetGoalsByUserID(userID ulid.ULID) ([]*Goal, error) {
@@ -104,7 +125,7 @@ func ValidateUpdateGoal(goal GoalUpdateRequest) error {
 	if goal.Name == "" {
 		return fmt.Errorf("name is required")
 	}
-	if goal.Target == 0 {
+	if goal.Target <= 0 {
 		return fmt.Errorf("target must be greater than 0")
 	}
 	if goal.EndedAt != nil && goal.EndedAt.Before(time.Now()) {
