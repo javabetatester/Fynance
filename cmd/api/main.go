@@ -46,17 +46,20 @@ func main() {
 	}
 
 	goalService := goal.Service{
-		Repository: goalRepo,
+		Repository:  goalRepo,
+		UserService: userService,
 	}
 
 	transactionService := transaction.Service{
 		Repository:         transactionRepo,
 		CategoryRepository: categoryRepo,
+		UserService:        &userService,
 	}
 
 	investmentService := investment.Service{
 		Repository:      investmentRepo,
 		TransactionRepo: transactionRepo,
+		UserService:     &userService,
 	}
 
 	jwtService := middleware.NewJwtService(&userService)
@@ -72,7 +75,6 @@ func main() {
 
 	router := gin.Default()
 
-	// Configuração Swagger
 	docs.SwaggerInfo.BasePath = "/api"
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
@@ -91,17 +93,26 @@ func main() {
 		{
 			goals.POST("", handler.CreateGoal)
 			goals.PATCH("/:id", handler.UpdateGoal)
+			goals.GET("", handler.ListGoals)
+			goals.GET("/:id", handler.GetGoal)
+			goals.DELETE("/:id", handler.DeleteGoal)
 		}
 
 		transactions := private.Group("/transactions")
 		{
 			transactions.POST("", handler.CreateTransaction)
 			transactions.GET("", handler.GetTransactions)
+			transactions.GET("/:id", handler.GetTransaction)
+			transactions.PATCH("/:id", handler.UpdateTransaction)
+			transactions.DELETE("/:id", handler.DeleteTransaction)
 		}
 
 		categories := private.Group("/categories")
 		{
 			categories.POST("", handler.CreateCategory)
+			categories.GET("", handler.ListCategories)
+			categories.PATCH("/:id", handler.UpdateCategory)
+			categories.DELETE("/:id", handler.DeleteCategory)
 		}
 
 		investments := private.Group("/investments")
@@ -113,6 +124,7 @@ func main() {
 			investments.POST("/:id/withdraw", handler.MakeWithdraw)
 			investments.GET("/:id/return", handler.GetInvestmentReturn)
 			investments.DELETE("/:id", handler.DeleteInvestment)
+			investments.PATCH("/:id", handler.UpdateInvestment)
 		}
 	}
 
