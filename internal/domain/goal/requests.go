@@ -7,23 +7,23 @@ import (
 )
 
 type GoalCreateRequest struct {
-	UserId     ulid.ULID  `json:"user_id"`
-	Name       string     `json:"name"`
-	Target     float64    `json:"target"`
-	EndedAt    *time.Time `json:"end_at"` // Nullable
+	UserId  ulid.ULID  `json:"user_id"`
+	Name    string     `json:"name"`
+	Target  float64    `json:"target"`
+	EndedAt *time.Time `json:"end_at"`
 }
 
 type GoalUpdateRequest struct {
-	Id         ulid.ULID  `json:"id"`
-	UserId     ulid.ULID  `json:"user_id"`
-	Name       string     `json:"name"`
-	Target     float64    `json:"target"`
-	EndedAt    *time.Time `json:"end_at"` // Nullable
+	Id      ulid.ULID  `json:"id"`
+	UserId  ulid.ULID  `json:"user_id"`
+	Name    string     `json:"name"`
+	Target  float64    `json:"target"`
+	EndedAt *time.Time `json:"end_at"`
 }
 
 type GoalDashboardResponse struct {
 	TargetAmount  float64    `json:"target_amount"`
 	CurrentAmount float64    `json:"current_amount"`
-	EndedAt       *time.Time `json:"ended_at"` // Nullable
+	EndedAt       *time.Time `json:"ended_at"`
 	Status        GoalStatus `json:"status"`
 }
