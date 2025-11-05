@@ -142,7 +142,7 @@ func (r *TransactionRepository) GetByAmount(amount float64) ([]*transaction.Tran
 
 func (r *TransactionRepository) GetByName(name string) ([]*transaction.Transaction, error) {
 	var rows []transactionDB
-	err := r.DB.Table("transactions").Where("name LIKE ?", "%"+name+"%").Find(&rows).Error
+	err := r.DB.Table("transactions").Where("description LIKE ?", "%"+name+"%").Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func (r *TransactionRepository) GetByName(name string) ([]*transaction.Transacti
 	return out, nil
 }
 
-func (r *TransactionRepository) GetByCategory(userID ulid.ULID, categoryID ulid.ULID) ([]*transaction.Transaction, error) {
+func (r *TransactionRepository) GetByCategory(categoryID ulid.ULID, userID ulid.ULID) ([]*transaction.Transaction, error) {
 	var rows []transactionDB
 	err := r.DB.Table("transactions").Where("user_id = ? AND category_id = ?", userID.String(), categoryID.String()).Find(&rows).Error
 	if err != nil {
