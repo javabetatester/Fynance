@@ -106,8 +106,12 @@ func (h *Handler) MakeContribution(c *gin.Context) {
 	}
 
 	if err := h.InvestmentService.MakeContribution(investmentID, userID, body.Amount, body.Description); err != nil {
-		if err.Error() == "investment not found" {
+		switch err.Error() {
+		case "investment not found":
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
+			return
+		case "amount must be greater than 0":
+			c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "valor do aporte deve ser maior que zero"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
@@ -137,8 +141,15 @@ func (h *Handler) MakeWithdraw(c *gin.Context) {
 	}
 
 	if err := h.InvestmentService.MakeWithdraw(investmentID, userID, body.Amount, body.Description); err != nil {
-		if err.Error() == "investment not found" {
+		switch err.Error() {
+		case "investment not found":
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
+			return
+		case "insufficient balance in investment":
+			c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "saldo insuficiente no investimento"})
+			return
+		case "amount must be greater than 0":
+			c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "valor deve ser maior que zero"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
@@ -215,24 +226,34 @@ func (h *Handler) UpdateInvestment(c *gin.Context) {
 		return
 	}
 
-	var body contracts.InvestimentUpdateRequest
+	var body contracts.InvestmentUpdateRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
 
 	updateReq := investment.UpdateInvestmentRequest{
-		UserId:        userID,
-		Id:            investmentID,
-		Name:          body.Name,
-		Type:          body.Type,
-		InitialAmount: body.InitialAmount,
-		ReturnRate:    body.ReturnRate,
+		UserId: userID,
+		Id:     investmentID,
+	}
+
+	if body.Name != nil {
+		updateReq.Name = body.Name
+	}
+	if body.Type != nil {
+		updateReq.Type = body.Type
+	}
+	if body.ReturnRate != nil {
+		updateReq.ReturnRate = body.ReturnRate
 	}
 
 	if err := h.InvestmentService.UpdateInvestment(investmentID, userID, updateReq); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "investment not found" {
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
+			return
+		}
+		if err.Error() == "name is required" {
+			c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "nome é obrigatório"})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
