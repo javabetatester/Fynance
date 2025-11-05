@@ -13,7 +13,7 @@ type Goal struct {
 	TargetAmount  float64    `gorm:"type:decimal(15,2);not null" json:"target_amount"`
 	CurrentAmount float64    `gorm:"type:decimal(15,2);not null;default:0" json:"current_amount"`
 	StartedAt     time.Time  `gorm:"type:timestamp" json:"started_at"`
-	EndedAt       *time.Time `gorm:"type:timestamp" json:"ended_at"` // Nullable
+	EndedAt       *time.Time `gorm:"type:timestamp" json:"ended_at"`
 	Status        GoalStatus `gorm:"type:varchar(20);default:'ACTIVE';index:idx_goals_status" json:"status"`
 	CreatedAt     time.Time  `gorm:"autoCreateTime;not null" json:"created_at"`
 	UpdatedAt     time.Time  `gorm:"autoUpdateTime;not null" json:"updated_at"`
