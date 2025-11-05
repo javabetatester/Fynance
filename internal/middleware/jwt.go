@@ -21,68 +21,62 @@ func RequireOwnership() gin.HandlerFunc {
 
 		tokenUserID := userIDFromToken.(string)
 
-		hasValidation := false
-
-		idFromURL := c.Param("id")
-		if idFromURL != "" {
-
-			if !strings.EqualFold(tokenUserID, idFromURL) {
-				c.JSON(http.StatusNotFound, gin.H{"error": "Resource not found"})
-				c.Abort()
-				return
-			}
-			hasValidation = true
-		}
-
-		if c.Request.Body != nil {
-			bodyBytes, err := io.ReadAll(c.Request.Body)
-			if err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot read body"})
-				c.Abort()
-				return
-			}
-
-			c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
-
-			if len(bodyBytes) > 0 {
-				var bodyData map[string]interface{}
-				if err := json.Unmarshal(bodyBytes, &bodyData); err != nil {
-					if hasValidation {
-						c.Next()
-						return
-					}
-					c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+		for _, param := range c.Params {
+			if strings.EqualFold(param.Key, "user_id") || strings.EqualFold(param.Key, "userid") {
+				if !strings.EqualFold(tokenUserID, param.Value) {
+					c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
 					c.Abort()
 					return
 				}
+			}
+		}
 
-				var idFromBody interface{}
-				var foundIDField bool
+		if userIDQuery := c.Query("user_id"); userIDQuery != "" {
+			if !strings.EqualFold(tokenUserID, userIDQuery) {
+				c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+				c.Abort()
+				return
+			}
+		}
 
-				if val, exists := bodyData["id"]; exists {
-					idFromBody = val
-					foundIDField = true
-				} else if val, exists := bodyData["Id"]; exists {
-					idFromBody = val
-					foundIDField = true
-				} else if val, exists := bodyData["user_id"]; exists {
-					idFromBody = val
-					foundIDField = true
+		if c.Request.Body == nil || c.Request.Body == http.NoBody {
+			c.Next()
+			return
+		}
+
+		bodyBytes, err := io.ReadAll(c.Request.Body)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot read body"})
+			c.Abort()
+			return
+		}
+
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+
+		if len(bodyBytes) == 0 {
+			c.Next()
+			return
+		}
+
+		var bodyData map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &bodyData); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+			c.Abort()
+			return
+		}
+
+		for _, key := range []string{"user_id", "userId"} {
+			if val, ok := bodyData[key]; ok {
+				idStr, ok := val.(string)
+				if !ok {
+					c.JSON(http.StatusBadRequest, gin.H{"error": "user_id must be a string"})
+					c.Abort()
+					return
 				}
-
-				if foundIDField {
-					idStr, ok := idFromBody.(string)
-					if !ok {
-						c.JSON(http.StatusBadRequest, gin.H{"error": "ID must be a string"})
-						c.Abort()
-						return
-					}
-
-					if tokenUserID != idStr {
-						c.JSON(http.StatusNotFound, gin.H{"error": "Resource not found"})
-						c.Abort()
-						return
-					}
+				if !strings.EqualFold(tokenUserID, idStr) {
+					c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
+					c.Abort()
+					return
 				}
 			}
 		}
