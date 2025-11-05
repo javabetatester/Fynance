@@ -10,12 +10,10 @@ type InvestmentCreateRequest struct {
 	CategoryID    string  `json:"category_id" binding:"omitempty"`
 }
 
-type InvestimentUpdateRequest struct {
-	Name          string  `json:"name" binding:"omitempty"`
-	CategoryID    string  `json:"category_id" binding:"omitempty"`
-	Type          string  `json:"type" binding:"omitempty,oneof=CDB LCI LCA TESOURO_DIRETO ACOES FUNDOS CRIPTOMOEDAS PREVIDENCIA"`
-	InitialAmount float64 `json:"initial_amount" binding:"omitempty,gt=0"`
-	ReturnRate    float64 `json:"return_rate" binding:"omitempty"`
+type InvestmentUpdateRequest struct {
+	Name       *string  `json:"name" binding:"omitempty"`
+	Type       *string  `json:"type" binding:"omitempty,oneof=CDB LCI LCA TESOURO_DIRETO ACOES FUNDOS CRIPTOMOEDAS PREVIDENCIA"`
+	ReturnRate *float64 `json:"return_rate" binding:"omitempty"`
 }
 
 type InvestmentContributionRequest struct {
