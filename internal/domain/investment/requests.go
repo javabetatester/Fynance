@@ -25,10 +25,9 @@ type WithdralRequest struct {
 }
 
 type UpdateInvestmentRequest struct {
-	UserId        ulid.ULID `json:"user_id"`
-	Id            ulid.ULID `json:"id"`
-	Name          string    `json:"name"`
-	Type          string    `json:"type" binding:"omitempty,oneof=CDB LCI LCA TESOURO_DIRETO ACOES FUNDOS CRIPTOMOEDAS PREVIDENCIA"`
-	InitialAmount float64   `json:"initial_amount" binding:"omitempty"`
-	ReturnRate    float64   `json:"return_rate" binding:"omitempty"`
+	UserId     ulid.ULID `json:"user_id"`
+	Id         ulid.ULID `json:"id"`
+	Name       *string   `json:"name,omitempty"`
+	Type       *string   `json:"type,omitempty"`
+	ReturnRate *float64  `json:"return_rate,omitempty"`
 }
