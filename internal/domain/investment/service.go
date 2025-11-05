@@ -5,6 +5,7 @@ import (
 	"Fynance/internal/domain/user"
 	"Fynance/internal/utils"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -26,9 +27,13 @@ func NewService(repo Repository, transactionRepo transaction.Repository) *Servic
 func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, error) {
 	investmentId := utils.GenerateULIDObject()
 
-	_, err := s.UserService.GetByID(req.UserId.String())
-	if err != nil {
+	if err := s.ensureUserExists(req.UserId); err != nil {
 		return nil, err
+	}
+
+	req.Name = strings.TrimSpace(req.Name)
+	if req.Name == "" {
+		return nil, errors.New("name is required")
 	}
 
 	investment, err := s.CreateInvestmentStruct(req, investmentId)
@@ -54,12 +59,16 @@ func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, er
 }
 
 func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float64, description string) error {
+	if amount <= 0 {
+		return errors.New("amount must be greater than 0")
+	}
+
 	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
 	if err != nil {
 		return errors.New("investment not found")
 	}
 
-	trans, err := s.MakeWithdrawAndContributionStruct(investmentId, userId, amount, description)
+	trans, err := s.makeInvestmentMovement(investmentId, userId, amount, description, transaction.Investment)
 	if err != nil {
 		return err
 	}
@@ -73,6 +82,10 @@ func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float6
 }
 
 func (s *Service) MakeWithdraw(investmentId, userId ulid.ULID, amount float64, description string) error {
+	if amount <= 0 {
+		return errors.New("amount must be greater than 0")
+	}
+
 	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
 	if err != nil {
 		return errors.New("investment not found")
@@ -82,7 +95,7 @@ func (s *Service) MakeWithdraw(investmentId, userId ulid.ULID, amount float64, d
 		return errors.New("insufficient balance in investment")
 	}
 
-	trans, err := s.MakeWithdrawAndContributionStruct(investmentId, userId, amount, description)
+	trans, err := s.makeInvestmentMovement(investmentId, userId, amount, description, transaction.Withdraw)
 	if err != nil {
 		return err
 	}
@@ -96,10 +109,16 @@ func (s *Service) MakeWithdraw(investmentId, userId ulid.ULID, amount float64, d
 }
 
 func (s *Service) ListInvestments(userId ulid.ULID) ([]*Investment, error) {
+	if err := s.ensureUserExists(userId); err != nil {
+		return nil, err
+	}
 	return s.Repository.GetByUserId(userId)
 }
 
 func (s *Service) GetInvestment(investmentId, userId ulid.ULID) (*Investment, error) {
+	if err := s.ensureUserExists(userId); err != nil {
+		return nil, err
+	}
 	return s.Repository.GetInvestmentById(investmentId, userId)
 }
 
@@ -162,57 +181,94 @@ func (s *Service) UpdateInvestment(investmentId, userId ulid.ULID, req UpdateInv
 		return err
 	}
 
-	investment.Name = req.Name
-	investment.Type = Types(req.Type)
-	investment.ReturnRate = req.ReturnRate
+	if req.Name != nil {
+		trimmed := strings.TrimSpace(*req.Name)
+		if trimmed == "" {
+			return errors.New("name is required")
+		}
+		investment.Name = trimmed
+	}
+
+	if req.Type != nil && *req.Type != "" {
+		investment.Type = Types(*req.Type)
+	}
+
+	if req.ReturnRate != nil {
+		investment.ReturnRate = *req.ReturnRate
+	}
+
+	investment.UpdatedAt = time.Now()
 
 	return s.Repository.Update(investment)
 }
 
 func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, InvestmentId ulid.ULID) (*Investment, error) {
-	investment := &Investment{
-		Id:             InvestmentId,
-		UserId:         req.UserId,
-		Type:           Types(req.Type),
-		Name:           req.Name,
-		CurrentBalance: req.InitialAmount,
-		ReturnRate:     req.ReturnRate,
-	}
 	now := utils.SetTimestamps()
-	investment.CreatedAt = now
-	investment.UpdatedAt = now
+
+	investment := &Investment{
+		Id:              InvestmentId,
+		UserId:          req.UserId,
+		Type:            Types(req.Type),
+		Name:            req.Name,
+		CurrentBalance:  req.InitialAmount,
+		ReturnBalance:   0,
+		ReturnRate:      req.ReturnRate,
+		ApplicationDate: now,
+		CreatedAt:       now,
+		UpdatedAt:       now,
+	}
+
 	return investment, nil
 }
 
 func (s *Service) CreateTransactionStruct(req CreateInvestmentRequest, InvestmentId ulid.ULID) (*transaction.Transaction, error) {
+	now := utils.SetTimestamps()
 
-	transaction := &transaction.Transaction{
+	return &transaction.Transaction{
 		Id:           utils.GenerateULIDObject(),
 		UserId:       req.UserId,
 		Type:         transaction.Investment,
 		Amount:       req.InitialAmount,
 		Description:  "Aporte inicial - " + req.Name,
-		Date:         time.Now(),
+		Date:         now,
 		InvestmentId: &InvestmentId,
-	}
-	now := utils.SetTimestamps()
-	transaction.CreatedAt = now
-	transaction.UpdatedAt = now
-	return transaction, nil
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}, nil
 }
 
-func (s *Service) MakeWithdrawAndContributionStruct(investmentId, userId ulid.ULID, amount float64, description string) (*transaction.Transaction, error) {
-	transaction := &transaction.Transaction{
+func (s *Service) makeInvestmentMovement(investmentId, userId ulid.ULID, amount float64, description string, movementType transaction.Types) (*transaction.Transaction, error) {
+	desc := strings.TrimSpace(description)
+	if desc == "" {
+		if movementType == transaction.Withdraw {
+			desc = "Resgate"
+		} else {
+			desc = "Aporte"
+		}
+	}
+
+	now := utils.SetTimestamps()
+
+	return &transaction.Transaction{
 		Id:           utils.GenerateULIDObject(),
 		UserId:       userId,
-		Type:         transaction.Investment,
+		Type:         movementType,
 		Amount:       amount,
-		Description:  description,
-		Date:         time.Now(),
+		Description:  desc,
+		Date:         now,
 		InvestmentId: &investmentId,
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}, nil
+}
+
+func (s *Service) ensureUserExists(userID ulid.ULID) error {
+	if s.UserService == nil {
+		return errors.New("user service not configured")
 	}
-	now := utils.SetTimestamps()
-	transaction.CreatedAt = now
-	transaction.UpdatedAt = now
-	return transaction, nil
+	_, err := s.UserService.GetByID(userID.String())
+	if err != nil {
+		return errors.New("user not found")
+	}
+	return nil
 }
