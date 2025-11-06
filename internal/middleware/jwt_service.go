@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"context"
+
 	"Fynance/internal/domain/user"
 	"os"
 	"time"
@@ -39,8 +41,8 @@ type Claim struct {
 	jwt.StandardClaims
 }
 
-func (s *JwtService) GenerateToken(id ulid.ULID) (string, error) {
-	plan, err := s.userService.GetPlan(id)
+func (s *JwtService) GenerateToken(ctx context.Context, id ulid.ULID) (string, error) {
+	plan, err := s.userService.GetPlan(ctx, id)
 	if err != nil {
 		return "", err
 	}
