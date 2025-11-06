@@ -1,12 +1,16 @@
 package user
 
-import "github.com/oklog/ulid/v2"
+import (
+	"context"
+
+	"github.com/oklog/ulid/v2"
+)
 
 type Repository interface {
-	Create(user *User) error
-	Update(user *User) error
-	Delete(id string) error
-	GetById(id string) (*User, error)
-	GetByEmail(email string) (*User, error)
-	GetPlan(id ulid.ULID) (Plan, error)
+	Create(ctx context.Context, user *User) error
+	Update(ctx context.Context, user *User) error
+	Delete(ctx context.Context, id string) error
+	GetById(ctx context.Context, id string) (*User, error)
+	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetPlan(ctx context.Context, id ulid.ULID) (Plan, error)
 }
