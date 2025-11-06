@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/utils"
+	"context"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -52,32 +53,32 @@ func toDBCategory(c *transaction.Category) *categoryDB {
 	}
 }
 
-func (r *TransactionCategoryRepository) Create(category *transaction.Category) error {
+func (r *TransactionCategoryRepository) Create(ctx context.Context, category *transaction.Category) error {
 	cdb := toDBCategory(category)
-	return r.DB.Table("categories").Create(&cdb).Error
+	return r.DB.WithContext(ctx).Table("categories").Create(&cdb).Error
 }
 
-func (r *TransactionCategoryRepository) Update(category *transaction.Category) error {
+func (r *TransactionCategoryRepository) Update(ctx context.Context, category *transaction.Category) error {
 	cdb := toDBCategory(category)
-	return r.DB.Table("categories").Where("id = ?", cdb.Id).Updates(&cdb).Error
+	return r.DB.WithContext(ctx).Table("categories").Where("id = ?", cdb.Id).Updates(&cdb).Error
 }
 
-func (r *TransactionCategoryRepository) Delete(categoryID ulid.ULID, userID ulid.ULID) error {
-	return r.DB.Table("categories").Where("id = ? AND user_id = ?", categoryID.String(), userID.String()).Delete(&categoryDB{}).Error
+func (r *TransactionCategoryRepository) Delete(ctx context.Context, categoryID ulid.ULID, userID ulid.ULID) error {
+	return r.DB.WithContext(ctx).Table("categories").Where("id = ? AND user_id = ?", categoryID.String(), userID.String()).Delete(&categoryDB{}).Error
 }
 
-func (r *TransactionCategoryRepository) GetByID(categoryID ulid.ULID, userID ulid.ULID) (*transaction.Category, error) {
+func (r *TransactionCategoryRepository) GetByID(ctx context.Context, categoryID ulid.ULID, userID ulid.ULID) (*transaction.Category, error) {
 	var row categoryDB
-	err := r.DB.Table("categories").Where("id = ? AND user_id = ?", categoryID.String(), userID.String()).First(&row).Error
+	err := r.DB.WithContext(ctx).Table("categories").Where("id = ? AND user_id = ?", categoryID.String(), userID.String()).First(&row).Error
 	if err != nil {
 		return nil, err
 	}
 	return toDomainCategory(&row)
 }
 
-func (r *TransactionCategoryRepository) GetAll(userID ulid.ULID) ([]*transaction.Category, error) {
+func (r *TransactionCategoryRepository) GetAll(ctx context.Context, userID ulid.ULID) ([]*transaction.Category, error) {
 	var rows []categoryDB
-	err := r.DB.Table("categories").Where("user_id = ?", userID.String()).Find(&rows).Error
+	err := r.DB.WithContext(ctx).Table("categories").Where("user_id = ?", userID.String()).Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
@@ -92,9 +93,9 @@ func (r *TransactionCategoryRepository) GetAll(userID ulid.ULID) ([]*transaction
 	return out, nil
 }
 
-func (r *TransactionCategoryRepository) GetByUserID(userID ulid.ULID) ([]*transaction.Category, error) {
+func (r *TransactionCategoryRepository) GetByUserID(ctx context.Context, userID ulid.ULID) ([]*transaction.Category, error) {
 	var rows []categoryDB
-	err := r.DB.Table("categories").Where("user_id = ?", userID.String()).Find(&rows).Error
+	err := r.DB.WithContext(ctx).Table("categories").Where("user_id = ?", userID.String()).Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
@@ -109,17 +110,17 @@ func (r *TransactionCategoryRepository) GetByUserID(userID ulid.ULID) ([]*transa
 	return out, nil
 }
 
-func (r *TransactionCategoryRepository) GetByName(CategoryName string, userID ulid.ULID) (*transaction.Category, error) {
+func (r *TransactionCategoryRepository) GetByName(ctx context.Context, CategoryName string, userID ulid.ULID) (*transaction.Category, error) {
 	var row categoryDB
-	err := r.DB.Table("categories").Where("name = ? AND user_id = ?", CategoryName, userID.String()).First(&row).Error
+	err := r.DB.WithContext(ctx).Table("categories").Where("name = ? AND user_id = ?", CategoryName, userID.String()).First(&row).Error
 	if err != nil {
 		return nil, err
 	}
 	return toDomainCategory(&row)
 }
 
-func (r *TransactionCategoryRepository) BelongsToUser(categoryID ulid.ULID, userID ulid.ULID) (bool, error) {
+func (r *TransactionCategoryRepository) BelongsToUser(ctx context.Context, categoryID ulid.ULID, userID ulid.ULID) (bool, error) {
 	var count int64
-	err := r.DB.Table("categories").Where("id = ? AND user_id = ?", categoryID.String(), userID.String()).Count(&count).Error
+	err := r.DB.WithContext(ctx).Table("categories").Where("id = ? AND user_id = ?", categoryID.String(), userID.String()).Count(&count).Error
 	return count > 0, err
 }
