@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"Fynance/internal/domain/investment"
 	"Fynance/internal/utils"
+	"context"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -64,14 +65,14 @@ func toDBInvestment(inv *investment.Investment) *investmentDB {
 	}
 }
 
-func (r *InvestmentRepository) Create(inv *investment.Investment) error {
+func (r *InvestmentRepository) Create(ctx context.Context, inv *investment.Investment) error {
 	idb := toDBInvestment(inv)
-	return r.DB.Table("investments").Create(idb).Error
+	return r.DB.WithContext(ctx).Table("investments").Create(idb).Error
 }
 
-func (r *InvestmentRepository) List(userId ulid.ULID) ([]*investment.Investment, error) {
+func (r *InvestmentRepository) List(ctx context.Context, userId ulid.ULID) ([]*investment.Investment, error) {
 	var rows []investmentDB
-	err := r.DB.Table("investments").Where("user_id = ?", userId.String()).
+	err := r.DB.WithContext(ctx).Table("investments").Where("user_id = ?", userId.String()).
 		Order("application_date DESC").
 		Find(&rows).Error
 	if err != nil {
@@ -88,19 +89,19 @@ func (r *InvestmentRepository) List(userId ulid.ULID) ([]*investment.Investment,
 	return out, nil
 }
 
-func (r *InvestmentRepository) Update(inv *investment.Investment) error {
+func (r *InvestmentRepository) Update(ctx context.Context, inv *investment.Investment) error {
 	idb := toDBInvestment(inv)
-	return r.DB.Table("investments").Where("id = ?", idb.Id).Updates(idb).Error
+	return r.DB.WithContext(ctx).Table("investments").Where("id = ?", idb.Id).Updates(idb).Error
 }
 
-func (r *InvestmentRepository) Delete(id ulid.ULID, userId ulid.ULID) error {
-	return r.DB.Table("investments").Where("id = ? AND user_id = ?", id.String(), userId.String()).
+func (r *InvestmentRepository) Delete(ctx context.Context, id ulid.ULID, userId ulid.ULID) error {
+	return r.DB.WithContext(ctx).Table("investments").Where("id = ? AND user_id = ?", id.String(), userId.String()).
 		Delete(&investmentDB{}).Error
 }
 
-func (r *InvestmentRepository) GetInvestmentById(id ulid.ULID, userId ulid.ULID) (*investment.Investment, error) {
+func (r *InvestmentRepository) GetInvestmentById(ctx context.Context, id ulid.ULID, userId ulid.ULID) (*investment.Investment, error) {
 	var row investmentDB
-	err := r.DB.Table("investments").Where("id = ? AND user_id = ?", id.String(), userId.String()).
+	err := r.DB.WithContext(ctx).Table("investments").Where("id = ? AND user_id = ?", id.String(), userId.String()).
 		First(&row).Error
 	if err != nil {
 		return nil, err
@@ -108,9 +109,9 @@ func (r *InvestmentRepository) GetInvestmentById(id ulid.ULID, userId ulid.ULID)
 	return toDomainInvestment(&row)
 }
 
-func (r *InvestmentRepository) GetByUserId(userId ulid.ULID) ([]*investment.Investment, error) {
+func (r *InvestmentRepository) GetByUserId(ctx context.Context, userId ulid.ULID) ([]*investment.Investment, error) {
 	var rows []investmentDB
-	err := r.DB.Table("investments").Where("user_id = ?", userId.String()).
+	err := r.DB.WithContext(ctx).Table("investments").Where("user_id = ?", userId.String()).
 		Order("application_date DESC").
 		Find(&rows).Error
 	if err != nil {
@@ -127,18 +128,18 @@ func (r *InvestmentRepository) GetByUserId(userId ulid.ULID) ([]*investment.Inve
 	return out, nil
 }
 
-func (r *InvestmentRepository) GetTotalBalance(userId ulid.ULID) (float64, error) {
+func (r *InvestmentRepository) GetTotalBalance(ctx context.Context, userId ulid.ULID) (float64, error) {
 	var total float64
-	err := r.DB.Table("investments").
+	err := r.DB.WithContext(ctx).Table("investments").
 		Where("user_id = ?", userId.String()).
 		Select("COALESCE(SUM(current_balance), 0)").
 		Scan(&total).Error
 	return total, err
 }
 
-func (r *InvestmentRepository) GetByType(userId ulid.ULID, investmentType investment.Types) ([]*investment.Investment, error) {
+func (r *InvestmentRepository) GetByType(ctx context.Context, userId ulid.ULID, investmentType investment.Types) ([]*investment.Investment, error) {
 	var rows []investmentDB
-	err := r.DB.Table("investments").Where("user_id = ? AND type = ?", userId.String(), string(investmentType)).
+	err := r.DB.WithContext(ctx).Table("investments").Where("user_id = ? AND type = ?", userId.String(), string(investmentType)).
 		Order("application_date DESC").
 		Find(&rows).Error
 	if err != nil {
