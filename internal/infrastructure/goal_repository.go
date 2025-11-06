@@ -1,6 +1,8 @@
 package infrastructure
 
 import (
+	"context"
+
 	"Fynance/internal/domain/goal"
 	"Fynance/internal/utils"
 	"time"
@@ -64,26 +66,26 @@ func toDBGoal(g *goal.Goal) *goalDB {
 	}
 }
 
-func (r *GoalRepository) Create(g *goal.Goal) error {
+func (r *GoalRepository) Create(ctx context.Context, g *goal.Goal) error {
 	gdb := toDBGoal(g)
-	return r.DB.Table("goals").Create(&gdb).Error
+	return r.DB.WithContext(ctx).Table("goals").Create(&gdb).Error
 }
 
-func (r *GoalRepository) Delete(id ulid.ULID) error {
-	return r.DB.Table("goals").Where("id = ?", id.String()).Delete(&goalDB{}).Error
+func (r *GoalRepository) Delete(ctx context.Context, id ulid.ULID) error {
+	return r.DB.WithContext(ctx).Table("goals").Where("id = ?", id.String()).Delete(&goalDB{}).Error
 }
 
-func (r *GoalRepository) GetById(id ulid.ULID) (*goal.Goal, error) {
+func (r *GoalRepository) GetById(ctx context.Context, id ulid.ULID) (*goal.Goal, error) {
 	var gdb goalDB
-	if err := r.DB.Table("goals").Where("id = ?", id.String()).First(&gdb).Error; err != nil {
+	if err := r.DB.WithContext(ctx).Table("goals").Where("id = ?", id.String()).First(&gdb).Error; err != nil {
 		return nil, err
 	}
 	return toDomainGoal(&gdb)
 }
 
-func (r *GoalRepository) GetByUserId(userID ulid.ULID) ([]*goal.Goal, error) {
+func (r *GoalRepository) GetByUserId(ctx context.Context, userID ulid.ULID) ([]*goal.Goal, error) {
 	var rows []goalDB
-	if err := r.DB.Table("goals").Where("user_id = ?", userID.String()).Find(&rows).Error; err != nil {
+	if err := r.DB.WithContext(ctx).Table("goals").Where("user_id = ?", userID.String()).Find(&rows).Error; err != nil {
 		return nil, err
 	}
 	out := make([]*goal.Goal, 0, len(rows))
@@ -97,9 +99,9 @@ func (r *GoalRepository) GetByUserId(userID ulid.ULID) ([]*goal.Goal, error) {
 	return out, nil
 }
 
-func (r *GoalRepository) List() ([]*goal.Goal, error) {
+func (r *GoalRepository) List(ctx context.Context) ([]*goal.Goal, error) {
 	var rows []goalDB
-	if err := r.DB.Table("goals").Find(&rows).Error; err != nil {
+	if err := r.DB.WithContext(ctx).Table("goals").Find(&rows).Error; err != nil {
 		return nil, err
 	}
 
@@ -114,18 +116,18 @@ func (r *GoalRepository) List() ([]*goal.Goal, error) {
 	return out, nil
 }
 
-func (r *GoalRepository) Update(g *goal.Goal) error {
+func (r *GoalRepository) Update(ctx context.Context, g *goal.Goal) error {
 	gdb := toDBGoal(g)
-	return r.DB.Table("goals").Where("id = ?", gdb.Id).Updates(&gdb).Error
+	return r.DB.WithContext(ctx).Table("goals").Where("id = ?", gdb.Id).Updates(&gdb).Error
 }
 
-func (r *GoalRepository) UpdateFields(id ulid.ULID, fields map[string]interface{}) error {
-	return r.DB.Table("goals").Where("id = ?", id.String()).Updates(fields).Error
+func (r *GoalRepository) UpdateFields(ctx context.Context, id ulid.ULID, fields map[string]interface{}) error {
+	return r.DB.WithContext(ctx).Table("goals").Where("id = ?", id.String()).Updates(fields).Error
 }
 
-func (r *GoalRepository) CheckGoalBelongsToUser(goalID ulid.ULID, userID ulid.ULID) (bool, error) {
+func (r *GoalRepository) CheckGoalBelongsToUser(ctx context.Context, goalID ulid.ULID, userID ulid.ULID) (bool, error) {
 	var count int64
-	err := r.DB.Table("goals").Where("id = ? AND user_id = ?", goalID.String(), userID.String()).Count(&count).Error
+	err := r.DB.WithContext(ctx).Table("goals").Where("id = ? AND user_id = ?", goalID.String(), userID.String()).Count(&count).Error
 
 	if err != nil {
 		return false, err
