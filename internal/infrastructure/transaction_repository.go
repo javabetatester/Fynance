@@ -3,6 +3,7 @@ package infrastructure
 import (
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/utils"
+	"context"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -83,32 +84,32 @@ func toDBTransaction(t *transaction.Transaction) *transactionDB {
 	}
 }
 
-func (r *TransactionRepository) Create(t *transaction.Transaction) error {
+func (r *TransactionRepository) Create(ctx context.Context, t *transaction.Transaction) error {
 	tdb := toDBTransaction(t)
-	return r.DB.Table("transactions").Create(tdb).Error
+	return r.DB.WithContext(ctx).Table("transactions").Create(tdb).Error
 }
 
-func (r *TransactionRepository) Update(t *transaction.Transaction) error {
+func (r *TransactionRepository) Update(ctx context.Context, t *transaction.Transaction) error {
 	tdb := toDBTransaction(t)
-	return r.DB.Table("transactions").Where("id = ?", tdb.Id).Updates(tdb).Error
+	return r.DB.WithContext(ctx).Table("transactions").Where("id = ?", tdb.Id).Updates(tdb).Error
 }
 
-func (r *TransactionRepository) Delete(transactionID ulid.ULID) error {
-	return r.DB.Delete(&transaction.Transaction{}, transactionID.String()).Error
+func (r *TransactionRepository) Delete(ctx context.Context, transactionID ulid.ULID) error {
+	return r.DB.WithContext(ctx).Delete(&transaction.Transaction{}, transactionID.String()).Error
 }
 
-func (r *TransactionRepository) GetByID(transactionID ulid.ULID) (*transaction.Transaction, error) {
+func (r *TransactionRepository) GetByID(ctx context.Context, transactionID ulid.ULID) (*transaction.Transaction, error) {
 	var tdb transactionDB
-	err := r.DB.Table("transactions").Where("id = ?", transactionID.String()).First(&tdb).Error
+	err := r.DB.WithContext(ctx).Table("transactions").Where("id = ?", transactionID.String()).First(&tdb).Error
 	if err != nil {
 		return nil, err
 	}
 	return toDomainTransaction(&tdb)
 }
 
-func (r *TransactionRepository) GetAll(userID ulid.ULID) ([]*transaction.Transaction, error) {
+func (r *TransactionRepository) GetAll(ctx context.Context, userID ulid.ULID) ([]*transaction.Transaction, error) {
 	var rows []transactionDB
-	err := r.DB.Table("transactions").Where("user_id = ?", userID.String()).Find(&rows).Error
+	err := r.DB.WithContext(ctx).Table("transactions").Where("user_id = ?", userID.String()).Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
@@ -123,9 +124,9 @@ func (r *TransactionRepository) GetAll(userID ulid.ULID) ([]*transaction.Transac
 	return out, nil
 }
 
-func (r *TransactionRepository) GetByAmount(amount float64) ([]*transaction.Transaction, error) {
+func (r *TransactionRepository) GetByAmount(ctx context.Context, amount float64) ([]*transaction.Transaction, error) {
 	var rows []transactionDB
-	err := r.DB.Table("transactions").Where("amount = ?", amount).Find(&rows).Error
+	err := r.DB.WithContext(ctx).Table("transactions").Where("amount = ?", amount).Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
@@ -140,9 +141,9 @@ func (r *TransactionRepository) GetByAmount(amount float64) ([]*transaction.Tran
 	return out, nil
 }
 
-func (r *TransactionRepository) GetByName(name string) ([]*transaction.Transaction, error) {
+func (r *TransactionRepository) GetByName(ctx context.Context, name string) ([]*transaction.Transaction, error) {
 	var rows []transactionDB
-	err := r.DB.Table("transactions").Where("description LIKE ?", "%"+name+"%").Find(&rows).Error
+	err := r.DB.WithContext(ctx).Table("transactions").Where("description LIKE ?", "%"+name+"%").Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
@@ -157,9 +158,9 @@ func (r *TransactionRepository) GetByName(name string) ([]*transaction.Transacti
 	return out, nil
 }
 
-func (r *TransactionRepository) GetByCategory(categoryID ulid.ULID, userID ulid.ULID) ([]*transaction.Transaction, error) {
+func (r *TransactionRepository) GetByCategory(ctx context.Context, categoryID ulid.ULID, userID ulid.ULID) ([]*transaction.Transaction, error) {
 	var rows []transactionDB
-	err := r.DB.Table("transactions").Where("user_id = ? AND category_id = ?", userID.String(), categoryID.String()).Find(&rows).Error
+	err := r.DB.WithContext(ctx).Table("transactions").Where("user_id = ? AND category_id = ?", userID.String(), categoryID.String()).Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
@@ -174,15 +175,15 @@ func (r *TransactionRepository) GetByCategory(categoryID ulid.ULID, userID ulid.
 	return out, nil
 }
 
-func (r *TransactionRepository) GetNumberOfTransactions(userID ulid.ULID) (int64, error) {
+func (r *TransactionRepository) GetNumberOfTransactions(ctx context.Context, userID ulid.ULID) (int64, error) {
 	var count int64
-	err := r.DB.Model(&transaction.Transaction{}).Where("user_id = ?", userID.String()).Count(&count).Error
+	err := r.DB.WithContext(ctx).Model(&transaction.Transaction{}).Where("user_id = ?", userID.String()).Count(&count).Error
 	return count, err
 }
 
-func (r *TransactionRepository) GetByInvestmentId(investmentID ulid.ULID, userID ulid.ULID) ([]*transaction.Transaction, error) {
+func (r *TransactionRepository) GetByInvestmentId(ctx context.Context, investmentID ulid.ULID, userID ulid.ULID) ([]*transaction.Transaction, error) {
 	var rows []transactionDB
-	err := r.DB.Table("transactions").Where("investment_id = ? AND user_id = ?", investmentID.String(), userID.String()).Find(&rows).Error
+	err := r.DB.WithContext(ctx).Table("transactions").Where("investment_id = ? AND user_id = ?", investmentID.String(), userID.String()).Find(&rows).Error
 	if err != nil {
 		return nil, err
 	}
