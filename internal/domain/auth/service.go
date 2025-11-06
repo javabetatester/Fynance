@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"context"
+
 	"Fynance/internal/domain/user"
 	"errors"
 	"regexp"
@@ -13,12 +15,12 @@ type Service struct {
 	UserService *user.Service
 }
 
-func (s *Service) Login(login Login) (*user.User, error) {
-	if !s.UserExists(login.Email) {
+func (s *Service) Login(ctx context.Context, login Login) (*user.User, error) {
+	if !s.UserExists(ctx, login.Email) {
 		return nil, errors.New("account does not exist")
 	}
 
-	user, err := s.GetByEmail(login.Email)
+	user, err := s.GetByEmail(ctx, login.Email)
 	if err != nil {
 		return nil, errors.New("invalid credentials")
 	}
@@ -30,8 +32,8 @@ func (s *Service) Login(login Login) (*user.User, error) {
 	return user, nil
 }
 
-func (s *Service) Register(user *user.User) error {
-	if s.UserExists(user.Email) {
+func (s *Service) Register(ctx context.Context, user *user.User) error {
+	if s.UserExists(ctx, user.Email) {
 		return errors.New("email already registered")
 	}
 
@@ -39,15 +41,15 @@ func (s *Service) Register(user *user.User) error {
 		return err
 	}
 
-	if err := s.UserService.Create(user); err != nil {
+	if err := s.UserService.Create(ctx, user); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *Service) GetByEmail(email string) (*user.User, error) {
-	user, err := s.Repository.GetByEmail(email)
+func (s *Service) GetByEmail(ctx context.Context, email string) (*user.User, error) {
+	user, err := s.Repository.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
@@ -55,8 +57,8 @@ func (s *Service) GetByEmail(email string) (*user.User, error) {
 	return user, nil
 }
 
-func (s *Service) UserExists(email string) bool {
-	_, err := s.GetByEmail(email)
+func (s *Service) UserExists(ctx context.Context, email string) bool {
+	_, err := s.GetByEmail(ctx, email)
 	return err == nil
 }
 
