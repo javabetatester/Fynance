@@ -1,6 +1,8 @@
 package goal
 
 import (
+	"context"
+
 	"Fynance/internal/domain/user"
 	"Fynance/internal/utils"
 	"fmt"
@@ -14,13 +16,13 @@ type Service struct {
 	UserService user.Service
 }
 
-func (s *Service) CreateGoal(goal *GoalCreateRequest) error {
+func (s *Service) CreateGoal(ctx context.Context, goal *GoalCreateRequest) error {
 	err := Validate(*goal)
 	if err != nil {
 		return err
 	}
 
-	if _, err := s.UserService.GetByID(goal.UserId.String()); err != nil {
+	if _, err := s.UserService.GetByID(ctx, goal.UserId.String()); err != nil {
 		return fmt.Errorf("user not found")
 	}
 
@@ -39,21 +41,21 @@ func (s *Service) CreateGoal(goal *GoalCreateRequest) error {
 		UpdatedAt:     now,
 	}
 
-	return s.Repository.Create(goalEntity)
+	return s.Repository.Create(ctx, goalEntity)
 }
 
-func (s *Service) UpdateGoal(goal *GoalUpdateRequest) error {
+func (s *Service) UpdateGoal(ctx context.Context, goal *GoalUpdateRequest) error {
 	err := ValidateUpdateGoal(*goal)
 	if err != nil {
 		return err
 	}
 
-	err = s.CheckGoalBelongsToUser(goal.Id, goal.UserId)
+	err = s.CheckGoalBelongsToUser(ctx, goal.Id, goal.UserId)
 	if err != nil {
 		return err
 	}
 
-	currentGoal, err := s.Repository.GetById(goal.Id)
+	currentGoal, err := s.Repository.GetById(ctx, goal.Id)
 	if err != nil {
 		return err
 	}
@@ -63,19 +65,19 @@ func (s *Service) UpdateGoal(goal *GoalUpdateRequest) error {
 	currentGoal.EndedAt = goal.EndedAt
 	currentGoal.UpdatedAt = time.Now()
 
-	return s.Repository.Update(currentGoal)
+	return s.Repository.Update(ctx, currentGoal)
 }
 
-func (s *Service) DeleteGoal(goalID ulid.ULID, userID ulid.ULID) error {
-	if err := s.CheckGoalBelongsToUser(goalID, userID); err != nil {
+func (s *Service) DeleteGoal(ctx context.Context, goalID ulid.ULID, userID ulid.ULID) error {
+	if err := s.CheckGoalBelongsToUser(ctx, goalID, userID); err != nil {
 		return err
 	}
 
-	return s.Repository.Delete(goalID)
+	return s.Repository.Delete(ctx, goalID)
 }
 
-func (s *Service) GetGoalByID(goalID ulid.ULID, userID ulid.ULID) (*Goal, error) {
-	goal, err := s.Repository.GetById(goalID)
+func (s *Service) GetGoalByID(ctx context.Context, goalID ulid.ULID, userID ulid.ULID) (*Goal, error) {
+	goal, err := s.Repository.GetById(ctx, goalID)
 	if err != nil {
 		return nil, err
 	}
@@ -87,16 +89,16 @@ func (s *Service) GetGoalByID(goalID ulid.ULID, userID ulid.ULID) (*Goal, error)
 	return goal, nil
 }
 
-func (s *Service) GetGoalsByUserID(userID ulid.ULID) ([]*Goal, error) {
-	return s.Repository.GetByUserId(userID)
+func (s *Service) GetGoalsByUserID(ctx context.Context, userID ulid.ULID) ([]*Goal, error) {
+	return s.Repository.GetByUserId(ctx, userID)
 }
 
-func (s *Service) ListGoals() ([]*Goal, error) {
-	return s.Repository.List()
+func (s *Service) ListGoals(ctx context.Context) ([]*Goal, error) {
+	return s.Repository.List(ctx)
 }
 
-func (s *Service) CheckGoalBelongsToUser(goalID ulid.ULID, userID ulid.ULID) error {
-	userBelongs, err := s.Repository.CheckGoalBelongsToUser(goalID, userID)
+func (s *Service) CheckGoalBelongsToUser(ctx context.Context, goalID ulid.ULID, userID ulid.ULID) error {
+	userBelongs, err := s.Repository.CheckGoalBelongsToUser(ctx, goalID, userID)
 	if err != nil {
 		return err
 	}
