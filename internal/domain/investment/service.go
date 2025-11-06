@@ -1,6 +1,8 @@
 package investment
 
 import (
+	"context"
+
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
 	"Fynance/internal/utils"
@@ -24,10 +26,10 @@ func NewService(repo Repository, transactionRepo transaction.Repository) *Servic
 	}
 }
 
-func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, error) {
+func (s *Service) CreateInvestment(ctx context.Context, req CreateInvestmentRequest) (*Investment, error) {
 	investmentId := utils.GenerateULIDObject()
 
-	if err := s.ensureUserExists(req.UserId); err != nil {
+	if err := s.ensureUserExists(ctx, req.UserId); err != nil {
 		return nil, err
 	}
 
@@ -41,7 +43,7 @@ func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, er
 		return nil, err
 	}
 
-	if err = s.Repository.Create(investment); err != nil {
+	if err = s.Repository.Create(ctx, investment); err != nil {
 		return nil, err
 	}
 
@@ -50,20 +52,20 @@ func (s *Service) CreateInvestment(req CreateInvestmentRequest) (*Investment, er
 		return nil, err
 	}
 
-	if err := s.TransactionRepo.Create(trans); err != nil {
-		s.Repository.Delete(investmentId, req.UserId)
+	if err := s.TransactionRepo.Create(ctx, trans); err != nil {
+		s.Repository.Delete(ctx, investmentId, req.UserId)
 		return nil, err
 	}
 
 	return investment, nil
 }
 
-func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float64, description string) error {
+func (s *Service) MakeContribution(ctx context.Context, investmentId, userId ulid.ULID, amount float64, description string) error {
 	if amount <= 0 {
 		return errors.New("amount must be greater than 0")
 	}
 
-	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
+	investment, err := s.Repository.GetInvestmentById(ctx, investmentId, userId)
 	if err != nil {
 		return errors.New("investment not found")
 	}
@@ -73,20 +75,20 @@ func (s *Service) MakeContribution(investmentId, userId ulid.ULID, amount float6
 		return err
 	}
 
-	if err := s.TransactionRepo.Create(trans); err != nil {
+	if err := s.TransactionRepo.Create(ctx, trans); err != nil {
 		return err
 	}
 
 	investment.CurrentBalance += amount
-	return s.Repository.Update(investment)
+	return s.Repository.Update(ctx, investment)
 }
 
-func (s *Service) MakeWithdraw(investmentId, userId ulid.ULID, amount float64, description string) error {
+func (s *Service) MakeWithdraw(ctx context.Context, investmentId, userId ulid.ULID, amount float64, description string) error {
 	if amount <= 0 {
 		return errors.New("amount must be greater than 0")
 	}
 
-	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
+	investment, err := s.Repository.GetInvestmentById(ctx, investmentId, userId)
 	if err != nil {
 		return errors.New("investment not found")
 	}
@@ -100,30 +102,30 @@ func (s *Service) MakeWithdraw(investmentId, userId ulid.ULID, amount float64, d
 		return err
 	}
 
-	if err := s.TransactionRepo.Create(trans); err != nil {
+	if err := s.TransactionRepo.Create(ctx, trans); err != nil {
 		return err
 	}
 
 	investment.CurrentBalance -= amount
-	return s.Repository.Update(investment)
+	return s.Repository.Update(ctx, investment)
 }
 
-func (s *Service) ListInvestments(userId ulid.ULID) ([]*Investment, error) {
-	if err := s.ensureUserExists(userId); err != nil {
+func (s *Service) ListInvestments(ctx context.Context, userId ulid.ULID) ([]*Investment, error) {
+	if err := s.ensureUserExists(ctx, userId); err != nil {
 		return nil, err
 	}
-	return s.Repository.GetByUserId(userId)
+	return s.Repository.GetByUserId(ctx, userId)
 }
 
-func (s *Service) GetInvestment(investmentId, userId ulid.ULID) (*Investment, error) {
-	if err := s.ensureUserExists(userId); err != nil {
+func (s *Service) GetInvestment(ctx context.Context, investmentId, userId ulid.ULID) (*Investment, error) {
+	if err := s.ensureUserExists(ctx, userId); err != nil {
 		return nil, err
 	}
-	return s.Repository.GetInvestmentById(investmentId, userId)
+	return s.Repository.GetInvestmentById(ctx, investmentId, userId)
 }
 
-func (s *Service) GetTotalInvested(investmentId, userId ulid.ULID) (float64, error) {
-	transactions, err := s.TransactionRepo.GetByInvestmentId(investmentId, userId)
+func (s *Service) GetTotalInvested(ctx context.Context, investmentId, userId ulid.ULID) (float64, error) {
+	transactions, err := s.TransactionRepo.GetByInvestmentId(ctx, investmentId, userId)
 	if err != nil {
 		return 0, err
 	}
@@ -141,13 +143,13 @@ func (s *Service) GetTotalInvested(investmentId, userId ulid.ULID) (float64, err
 	return total, nil
 }
 
-func (s *Service) CalculateReturn(investmentId, userId ulid.ULID) (float64, float64, error) {
-	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
+func (s *Service) CalculateReturn(ctx context.Context, investmentId, userId ulid.ULID) (float64, float64, error) {
+	investment, err := s.Repository.GetInvestmentById(ctx, investmentId, userId)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	totalInvested, err := s.GetTotalInvested(investmentId, userId)
+	totalInvested, err := s.GetTotalInvested(ctx, investmentId, userId)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -162,8 +164,8 @@ func (s *Service) CalculateReturn(investmentId, userId ulid.ULID) (float64, floa
 	return profit, returnPercentage, nil
 }
 
-func (s *Service) DeleteInvestment(investmentId, userId ulid.ULID) error {
-	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
+func (s *Service) DeleteInvestment(ctx context.Context, investmentId, userId ulid.ULID) error {
+	investment, err := s.Repository.GetInvestmentById(ctx, investmentId, userId)
 	if err != nil {
 		return err
 	}
@@ -172,11 +174,11 @@ func (s *Service) DeleteInvestment(investmentId, userId ulid.ULID) error {
 		return errors.New("cannot delete investment with balance")
 	}
 
-	return s.Repository.Delete(investmentId, userId)
+	return s.Repository.Delete(ctx, investmentId, userId)
 }
 
-func (s *Service) UpdateInvestment(investmentId, userId ulid.ULID, req UpdateInvestmentRequest) error {
-	investment, err := s.Repository.GetInvestmentById(investmentId, userId)
+func (s *Service) UpdateInvestment(ctx context.Context, investmentId, userId ulid.ULID, req UpdateInvestmentRequest) error {
+	investment, err := s.Repository.GetInvestmentById(ctx, investmentId, userId)
 	if err != nil {
 		return err
 	}
@@ -199,7 +201,7 @@ func (s *Service) UpdateInvestment(investmentId, userId ulid.ULID, req UpdateInv
 
 	investment.UpdatedAt = time.Now()
 
-	return s.Repository.Update(investment)
+	return s.Repository.Update(ctx, investment)
 }
 
 func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, InvestmentId ulid.ULID) (*Investment, error) {
@@ -262,11 +264,11 @@ func (s *Service) makeInvestmentMovement(investmentId, userId ulid.ULID, amount 
 	}, nil
 }
 
-func (s *Service) ensureUserExists(userID ulid.ULID) error {
+func (s *Service) ensureUserExists(ctx context.Context, userID ulid.ULID) error {
 	if s.UserService == nil {
 		return errors.New("user service not configured")
 	}
-	_, err := s.UserService.GetByID(userID.String())
+	_, err := s.UserService.GetByID(ctx, userID.String())
 	if err != nil {
 		return errors.New("user not found")
 	}
