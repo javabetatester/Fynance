@@ -33,7 +33,8 @@ func (h *Handler) CreateInvestment(c *gin.Context) {
 		ReturnRate:    body.ReturnRate,
 	}
 
-	inv, err := h.InvestmentService.CreateInvestment(req)
+	ctx := c.Request.Context()
+	inv, err := h.InvestmentService.CreateInvestment(ctx, req)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -52,7 +53,8 @@ func (h *Handler) ListInvestments(c *gin.Context) {
 		return
 	}
 
-	investments, err := h.InvestmentService.ListInvestments(userID)
+	ctx := c.Request.Context()
+	investments, err := h.InvestmentService.ListInvestments(ctx, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -77,7 +79,8 @@ func (h *Handler) GetInvestment(c *gin.Context) {
 		return
 	}
 
-	inv, err := h.InvestmentService.GetInvestment(investmentID, userID)
+	ctx := c.Request.Context()
+	inv, err := h.InvestmentService.GetInvestment(ctx, investmentID, userID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
 		return
@@ -105,7 +108,8 @@ func (h *Handler) MakeContribution(c *gin.Context) {
 		return
 	}
 
-	if err := h.InvestmentService.MakeContribution(investmentID, userID, body.Amount, body.Description); err != nil {
+	ctx := c.Request.Context()
+	if err := h.InvestmentService.MakeContribution(ctx, investmentID, userID, body.Amount, body.Description); err != nil {
 		switch err.Error() {
 		case "investment not found":
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
@@ -140,7 +144,8 @@ func (h *Handler) MakeWithdraw(c *gin.Context) {
 		return
 	}
 
-	if err := h.InvestmentService.MakeWithdraw(investmentID, userID, body.Amount, body.Description); err != nil {
+	ctx := c.Request.Context()
+	if err := h.InvestmentService.MakeWithdraw(ctx, investmentID, userID, body.Amount, body.Description); err != nil {
 		switch err.Error() {
 		case "investment not found":
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
@@ -172,7 +177,8 @@ func (h *Handler) GetInvestmentReturn(c *gin.Context) {
 		return
 	}
 
-	profit, returnPercentage, err := h.InvestmentService.CalculateReturn(investmentID, userID)
+	ctx := c.Request.Context()
+	profit, returnPercentage, err := h.InvestmentService.CalculateReturn(ctx, investmentID, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -197,7 +203,8 @@ func (h *Handler) DeleteInvestment(c *gin.Context) {
 		return
 	}
 
-	if err := h.InvestmentService.DeleteInvestment(investmentID, userID); err != nil {
+	ctx := c.Request.Context()
+	if err := h.InvestmentService.DeleteInvestment(ctx, investmentID, userID); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "investment not found" {
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
 			return
@@ -247,7 +254,8 @@ func (h *Handler) UpdateInvestment(c *gin.Context) {
 		updateReq.ReturnRate = body.ReturnRate
 	}
 
-	if err := h.InvestmentService.UpdateInvestment(investmentID, userID, updateReq); err != nil {
+	ctx := c.Request.Context()
+	if err := h.InvestmentService.UpdateInvestment(ctx, investmentID, userID, updateReq); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "investment not found" {
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
 			return
