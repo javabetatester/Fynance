@@ -1,9 +1,12 @@
 package transaction
 
 import (
-	"Fynance/internal/domain/user"
-	"Fynance/internal/utils"
+	"context"
 	"errors"
+
+	"Fynance/internal/domain/user"
+	appErrors "Fynance/internal/errors"
+	"Fynance/internal/utils"
 	"strings"
 	"time"
 
@@ -17,38 +20,38 @@ type Service struct {
 	UserService        *user.Service
 }
 
-func (s *Service) CreateTransaction(transaction *Transaction) error {
-	if err := s.ensureUserExists(transaction.UserId); err != nil {
+func (s *Service) CreateTransaction(ctx context.Context, transaction *Transaction) error {
+	if err := s.ensureUserExists(ctx, transaction.UserId); err != nil {
 		return err
 	}
 
-	err := s.CategoryValidation(transaction.CategoryId, transaction.UserId)
+	err := s.CategoryValidation(ctx, transaction.CategoryId, transaction.UserId)
 	if err != nil {
 		return err
 	}
 
 	TransactionCreateStruct(transaction)
 
-	if err := s.Repository.Create(transaction); err != nil {
-		return errors.New("failed to create transaction")
+	if err := s.Repository.Create(ctx, transaction); err != nil {
+		return appErrors.NewDatabaseError(err)
 	}
 
 	return nil
 }
 
-func (s *Service) UpdateTransaction(transaction *Transaction) error {
-	if err := s.ensureUserExists(transaction.UserId); err != nil {
+func (s *Service) UpdateTransaction(ctx context.Context, transaction *Transaction) error {
+	if err := s.ensureUserExists(ctx, transaction.UserId); err != nil {
 		return err
 	}
 
-	storedTransaction, err := s.GetTransactionByID(transaction.Id, transaction.UserId)
+	storedTransaction, err := s.GetTransactionByID(ctx, transaction.Id, transaction.UserId)
 	if err != nil {
 		return err
 	}
 
 	transaction.UpdatedAt = time.Now()
 
-	err = s.UpdateTransactionValidation(transaction)
+	err = s.UpdateTransactionValidation(ctx, transaction)
 	if err != nil {
 		return err
 	}
@@ -62,82 +65,105 @@ func (s *Service) UpdateTransaction(transaction *Transaction) error {
 	}
 	storedTransaction.UpdatedAt = transaction.UpdatedAt
 
-	return s.Repository.Update(storedTransaction)
+	return s.Repository.Update(ctx, storedTransaction)
 }
 
-func (s *Service) DeleteTransaction(transactionID ulid.ULID, userID ulid.ULID) error {
-	if err := s.TransactionExists(transactionID, userID); err != nil {
+func (s *Service) DeleteTransaction(ctx context.Context, transactionID ulid.ULID, userID ulid.ULID) error {
+	if err := s.TransactionExists(ctx, transactionID, userID); err != nil {
 		return err
 	}
-	return s.Repository.Delete(transactionID)
+	return s.Repository.Delete(ctx, transactionID)
 }
 
-func (s *Service) GetTransactionByID(transactionID ulid.ULID, userID ulid.ULID) (*Transaction, error) {
-	transaction, err := s.Repository.GetByID(transactionID)
+func (s *Service) GetTransactionByID(ctx context.Context, transactionID ulid.ULID, userID ulid.ULID) (*Transaction, error) {
+	transaction, err := s.Repository.GetByID(ctx, transactionID)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, appErrors.ErrTransactionNotFound
+		}
+		return nil, appErrors.NewDatabaseError(err)
 	}
 	if transaction.UserId != userID {
-		return nil, errors.New("transaction does not belong to user")
+		return nil, appErrors.ErrResourceNotOwned
 	}
 	return transaction, nil
 }
 
-func (s *Service) GetAllTransactions(userID ulid.ULID) ([]*Transaction, error) {
-	return s.Repository.GetAll(userID)
+func (s *Service) GetAllTransactions(ctx context.Context, userID ulid.ULID) ([]*Transaction, error) {
+	transactions, err := s.Repository.GetAll(ctx, userID)
+	if err != nil {
+		return nil, appErrors.NewDatabaseError(err)
+	}
+	return transactions, nil
 }
 
-func (s *Service) GetTransactionsByAmount(amount float64) ([]*Transaction, error) {
-	return s.Repository.GetByAmount(amount)
+func (s *Service) GetTransactionsByAmount(ctx context.Context, amount float64) ([]*Transaction, error) {
+	transactions, err := s.Repository.GetByAmount(ctx, amount)
+	if err != nil {
+		return nil, appErrors.NewDatabaseError(err)
+	}
+	return transactions, nil
 }
 
-func (s *Service) GetTransactionsByName(name string) ([]*Transaction, error) {
-	return s.Repository.GetByName(name)
+func (s *Service) GetTransactionsByName(ctx context.Context, name string) ([]*Transaction, error) {
+	transactions, err := s.Repository.GetByName(ctx, name)
+	if err != nil {
+		return nil, appErrors.NewDatabaseError(err)
+	}
+	return transactions, nil
 }
 
-func (s *Service) GetTransactionsByCategory(categoryID ulid.ULID, userID ulid.ULID) ([]*Transaction, error) {
-	return s.Repository.GetByCategory(categoryID, userID)
+func (s *Service) GetTransactionsByCategory(ctx context.Context, categoryID ulid.ULID, userID ulid.ULID) ([]*Transaction, error) {
+	transactions, err := s.Repository.GetByCategory(ctx, categoryID, userID)
+	if err != nil {
+		return nil, appErrors.NewDatabaseError(err)
+	}
+	return transactions, nil
 }
 
-func (s *Service) CreateCategory(category *Category) error {
-	if err := s.ensureUserExists(category.UserId); err != nil {
+func (s *Service) CreateCategory(ctx context.Context, category *Category) error {
+	if err := s.ensureUserExists(ctx, category.UserId); err != nil {
 		return err
 	}
 
 	category.Name = strings.TrimSpace(category.Name)
 	if category.Name == "" {
-		return errors.New("name is required")
+		return appErrors.NewValidationError("name", "é obrigatório")
 	}
 
-	if err := s.CategoryExists(category.Name, category.UserId); err != nil {
+	if err := s.CategoryExists(ctx, category.Name, category.UserId); err != nil {
 		return err
 	}
 
 	CategoryCreateStruct(category)
 
-	return s.CategoryRepository.Create(category)
+	if err := s.CategoryRepository.Create(ctx, category); err != nil {
+		return appErrors.NewDatabaseError(err)
+	}
+
+	return nil
 }
 
-func (s *Service) UpdateCategory(category *Category) error {
-	if err := s.ensureUserExists(category.UserId); err != nil {
+func (s *Service) UpdateCategory(ctx context.Context, category *Category) error {
+	if err := s.ensureUserExists(ctx, category.UserId); err != nil {
 		return err
 	}
 
-	existingCategory, err := s.CategoryRepository.GetByID(category.Id, category.UserId)
+	existingCategory, err := s.CategoryRepository.GetByID(ctx, category.Id, category.UserId)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return errors.New("category not found")
+		return appErrors.ErrCategoryNotFound
 	}
 	if err != nil {
-		return err
+		return appErrors.NewDatabaseError(err)
 	}
 
 	category.Name = strings.TrimSpace(category.Name)
 	if category.Name == "" {
-		return errors.New("name is required")
+		return appErrors.NewValidationError("name", "é obrigatório")
 	}
 
 	if !strings.EqualFold(existingCategory.Name, category.Name) {
-		if err := s.CategoryExists(category.Name, category.UserId); err != nil {
+		if err := s.CategoryExists(ctx, category.Name, category.UserId); err != nil {
 			return err
 		}
 	}
@@ -146,80 +172,88 @@ func (s *Service) UpdateCategory(category *Category) error {
 	existingCategory.Icon = category.Icon
 	existingCategory.UpdatedAt = time.Now()
 
-	return s.CategoryRepository.Update(existingCategory)
+	return s.CategoryRepository.Update(ctx, existingCategory)
 }
 
-func (s *Service) DeleteCategory(categoryID ulid.ULID, userID ulid.ULID) error {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Service) DeleteCategory(ctx context.Context, categoryID ulid.ULID, userID ulid.ULID) error {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return err
 	}
 
-	if _, err := s.CategoryRepository.GetByID(categoryID, userID); errors.Is(err, gorm.ErrRecordNotFound) {
-		return errors.New("category not found")
+	if _, err := s.CategoryRepository.GetByID(ctx, categoryID, userID); errors.Is(err, gorm.ErrRecordNotFound) {
+		return appErrors.ErrCategoryNotFound
 	} else if err != nil {
-		return err
+		return appErrors.NewDatabaseError(err)
 	}
-	return s.CategoryRepository.Delete(categoryID, userID)
+	return s.CategoryRepository.Delete(ctx, categoryID, userID)
 }
 
-func (s *Service) GetCategoryByID(categoryID ulid.ULID, userID ulid.ULID) (*Category, error) {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Service) GetCategoryByID(ctx context.Context, categoryID ulid.ULID, userID ulid.ULID) (*Category, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return nil, err
 	}
 
-	category, err := s.CategoryRepository.GetByID(categoryID, userID)
+	category, err := s.CategoryRepository.GetByID(ctx, categoryID, userID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, errors.New("category not found")
+		return nil, appErrors.ErrCategoryNotFound
 	}
 	if err != nil {
-		return nil, err
+		return nil, appErrors.NewDatabaseError(err)
 	}
 
 	return category, nil
 }
 
-func (s *Service) GetAllCategories(userID ulid.ULID) ([]*Category, error) {
-	if err := s.ensureUserExists(userID); err != nil {
+func (s *Service) GetAllCategories(ctx context.Context, userID ulid.ULID) ([]*Category, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return nil, err
 	}
-	return s.CategoryRepository.GetAll(userID)
+	categories, err := s.CategoryRepository.GetAll(ctx, userID)
+	if err != nil {
+		return nil, appErrors.NewDatabaseError(err)
+	}
+	return categories, nil
 }
 
-func (s *Service) CategoryExists(categoryName string, userID ulid.ULID) error {
+func (s *Service) CategoryExists(ctx context.Context, categoryName string, userID ulid.ULID) error {
 	trimmedName := strings.TrimSpace(categoryName)
 	if trimmedName == "" {
-		return errors.New("name is required")
+		return appErrors.NewValidationError("name", "é obrigatório")
 	}
 
-	_, err := s.CategoryRepository.GetByName(trimmedName, userID)
+	_, err := s.CategoryRepository.GetByName(ctx, trimmedName, userID)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil
 	}
 
 	if err != nil {
-		return err
+		return appErrors.NewDatabaseError(err)
 	}
 
-	return errors.New("category already exists")
+	return appErrors.NewConflictError("categoria")
 }
 
-func (s *Service) CategoryValidation(categoryId ulid.ULID, userID ulid.ULID) error {
-	_, err := s.CategoryRepository.GetByID(categoryId, userID)
+func (s *Service) CategoryValidation(ctx context.Context, categoryId ulid.ULID, userID ulid.ULID) error {
+	_, err := s.CategoryRepository.GetByID(ctx, categoryId, userID)
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return errors.New("category does not exist")
+		return appErrors.ErrCategoryNotFound
 	}
 
 	if err != nil {
-		return err
+		return appErrors.NewDatabaseError(err)
 	}
 
 	return nil
 }
 
-func (s *Service) GetNumberOfTransactions(userID ulid.ULID) (int64, error) {
-	return s.Repository.GetNumberOfTransactions(userID)
+func (s *Service) GetNumberOfTransactions(ctx context.Context, userID ulid.ULID) (int64, error) {
+	count, err := s.Repository.GetNumberOfTransactions(ctx, userID)
+	if err != nil {
+		return 0, appErrors.NewDatabaseError(err)
+	}
+	return count, nil
 }
 
 func TransactionCreateStruct(transaction *Transaction) {
@@ -235,23 +269,22 @@ func CategoryCreateStruct(category *Category) {
 	category.UpdatedAt = time.Now()
 }
 
-func (s *Service) UpdateTransactionValidation(transaction *Transaction) error {
-
+func (s *Service) UpdateTransactionValidation(ctx context.Context, transaction *Transaction) error {
 	if transaction.Amount < 0 {
-		return errors.New("amount must be greater than 0")
+		return appErrors.NewValidationError("amount", "deve ser maior que zero")
 	}
 
-	if _, err := s.GetCategoryByID(transaction.CategoryId, transaction.UserId); err != nil {
+	if _, err := s.GetCategoryByID(ctx, transaction.CategoryId, transaction.UserId); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (s *Service) TransactionExists(transactionID ulid.ULID, userID ulid.ULID) error {
-	_, err := s.GetTransactionByID(transactionID, userID)
+func (s *Service) TransactionExists(ctx context.Context, transactionID ulid.ULID, userID ulid.ULID) error {
+	_, err := s.GetTransactionByID(ctx, transactionID, userID)
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return errors.New("transaction does not exist")
+		return appErrors.ErrTransactionNotFound
 	}
 	if err != nil {
 		return err
@@ -259,13 +292,13 @@ func (s *Service) TransactionExists(transactionID ulid.ULID, userID ulid.ULID) e
 	return nil
 }
 
-func (s *Service) ensureUserExists(userID ulid.ULID) error {
+func (s *Service) ensureUserExists(ctx context.Context, userID ulid.ULID) error {
 	if s.UserService == nil {
-		return errors.New("user service not configured")
+		return appErrors.ErrInternalServer.WithError(errors.New("user service not configured"))
 	}
-	_, err := s.UserService.GetByID(userID.String())
+	_, err := s.UserService.GetByID(ctx, userID.String())
 	if err != nil {
-		return errors.New("user not found")
+		return appErrors.ErrUserNotFound
 	}
 	return nil
 }
