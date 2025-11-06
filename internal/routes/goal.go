@@ -32,7 +32,8 @@ func (h *Handler) CreateGoal(c *gin.Context) {
 		EndedAt: body.EndAt,
 	}
 
-	if err := h.GoalService.CreateGoal(&req); err != nil {
+	ctx := c.Request.Context()
+	if err := h.GoalService.CreateGoal(ctx, &req); err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -73,7 +74,8 @@ func (h *Handler) UpdateGoal(c *gin.Context) {
 		EndedAt: body.EndAt,
 	}
 
-	if err := h.GoalService.UpdateGoal(&req); err != nil {
+	ctx := c.Request.Context()
+	if err := h.GoalService.UpdateGoal(ctx, &req); err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -88,7 +90,8 @@ func (h *Handler) ListGoals(c *gin.Context) {
 		return
 	}
 
-	goals, err := h.GoalService.GetGoalsByUserID(userID)
+	ctx := c.Request.Context()
+	goals, err := h.GoalService.GetGoalsByUserID(ctx, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -116,7 +119,8 @@ func (h *Handler) GetGoal(c *gin.Context) {
 		return
 	}
 
-	goalEntity, err := h.GoalService.GetGoalByID(goalID, userID)
+	ctx := c.Request.Context()
+	goalEntity, err := h.GoalService.GetGoalByID(ctx, goalID, userID)
 	if err != nil {
 		if err.Error() == "goal does not belong to user" || errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Meta não encontrada"})
@@ -148,7 +152,8 @@ func (h *Handler) DeleteGoal(c *gin.Context) {
 		return
 	}
 
-	if err := h.GoalService.DeleteGoal(goalID, userID); err != nil {
+	ctx := c.Request.Context()
+	if err := h.GoalService.DeleteGoal(ctx, goalID, userID); err != nil {
 		if err.Error() == "goal does not belong to user" || errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Meta não encontrada"})
 			return
