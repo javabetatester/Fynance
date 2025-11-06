@@ -31,7 +31,8 @@ func (h *Handler) CreateCategory(c *gin.Context) {
 		Icon:   body.Icon,
 	}
 
-	if err := h.TransactionService.CreateCategory(&category); err != nil {
+	ctx := c.Request.Context()
+	if err := h.TransactionService.CreateCategory(ctx, &category); err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -46,7 +47,8 @@ func (h *Handler) ListCategories(c *gin.Context) {
 		return
 	}
 
-	categories, err := h.TransactionService.GetAllCategories(userID)
+	ctx := c.Request.Context()
+	categories, err := h.TransactionService.GetAllCategories(ctx, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -81,7 +83,8 @@ func (h *Handler) UpdateCategory(c *gin.Context) {
 		Icon:   body.Icon,
 	}
 
-	if err := h.TransactionService.UpdateCategory(&category); err != nil {
+	ctx := c.Request.Context()
+	if err := h.TransactionService.UpdateCategory(ctx, &category); err != nil {
 		if err.Error() == "category not found" || errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Categoria não encontrada"})
 			return
@@ -110,7 +113,8 @@ func (h *Handler) DeleteCategory(c *gin.Context) {
 		return
 	}
 
-	if err := h.TransactionService.DeleteCategory(categoryID, userID); err != nil {
+	ctx := c.Request.Context()
+	if err := h.TransactionService.DeleteCategory(ctx, categoryID, userID); err != nil {
 		if err.Error() == "category not found" || errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Categoria não encontrada"})
 			return
