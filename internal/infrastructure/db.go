@@ -1,35 +1,54 @@
 package infrastructure
 
 import (
-	"log"
-
+	"Fynance/internal/config"
 	"Fynance/internal/domain/goal"
 	"Fynance/internal/domain/investment"
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
+	"Fynance/internal/logger"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-func NewDb() *gorm.DB {
-	dsn := "host=localhost user=postgres password=admin dbname=postgres port=5432 sslmode=disable TimeZone=UTC"
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+func NewDb(cfg *config.Config) (*gorm.DB, error) {
+	db, err := gorm.Open(postgres.Open(cfg.Database.DSN), &gorm.Config{})
 	if err != nil {
-		log.Printf("Falha ao conectar ao banco de dados: %v", err)
-		log.Println("Certifique-se de que o PostgreSQL está rodando e as configurações estão corretas")
-		log.Fatalf("Erro fatal na conexão com banco: %v", err)
+		logger.Error().
+			Err(err).
+			Str("host", cfg.Database.Host).
+			Int("port", cfg.Database.Port).
+			Str("database", cfg.Database.DBName).
+			Msg("Falha ao conectar ao banco de dados")
+		return nil, err
 	}
 
-	log.Println("Conexão com banco de dados estabelecida com sucesso")
+	sqlDB, err := db.DB()
+	if err != nil {
+		logger.Error().Err(err).Msg("Falha ao obter instância do banco de dados")
+		return nil, err
+	}
 
-	runMigrations(db)
+	sqlDB.SetMaxOpenConns(cfg.Database.MaxOpenConns)
+	sqlDB.SetMaxIdleConns(cfg.Database.MaxIdleConns)
+	sqlDB.SetConnMaxLifetime(cfg.Database.ConnMaxLifetime)
 
-	return db
+	logger.Info().
+		Str("host", cfg.Database.Host).
+		Int("port", cfg.Database.Port).
+		Str("database", cfg.Database.DBName).
+		Msg("Conexão com banco de dados estabelecida com sucesso")
+
+	if err := runMigrations(db); err != nil {
+		return nil, err
+	}
+
+	return db, nil
 }
 
-func runMigrations(db *gorm.DB) {
-	log.Println("Executando migrations...")
+func runMigrations(db *gorm.DB) error {
+	logger.Info().Msg("Executando migrations...")
 
 	entities := []interface{}{
 		&user.User{},
@@ -41,10 +60,31 @@ func runMigrations(db *gorm.DB) {
 
 	for _, entity := range entities {
 		if err := db.AutoMigrate(entity); err != nil {
-			log.Printf("Erro ao migrar entidade %T: %v", entity, err)
-			log.Fatalf("Falha na migração do banco de dados")
+			logger.Error().
+				Err(err).
+				Str("entity", getEntityName(entity)).
+				Msg("Erro ao migrar entidade")
+			return err
 		}
 	}
 
-	log.Println("Migrations executadas com sucesso!")
+	logger.Info().Msg("Migrations executadas com sucesso!")
+	return nil
+}
+
+func getEntityName(entity interface{}) string {
+	switch entity.(type) {
+	case *user.User:
+		return "User"
+	case *goal.Goal:
+		return "Goal"
+	case *transaction.Transaction:
+		return "Transaction"
+	case *transaction.Category:
+		return "Category"
+	case *investment.Investment:
+		return "Investment"
+	default:
+		return "Unknown"
+	}
 }
