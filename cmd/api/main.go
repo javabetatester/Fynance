@@ -1,12 +1,14 @@
 package main
 
 import (
+	"Fynance/internal/config"
 	"Fynance/internal/domain/auth"
 	"Fynance/internal/domain/goal"
 	"Fynance/internal/domain/investment"
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
 	"Fynance/internal/infrastructure"
+	"Fynance/internal/logger"
 	"Fynance/internal/middleware"
 	"Fynance/internal/routes"
 
@@ -28,7 +30,13 @@ import (
 // @description Utilize "Bearer <token>" no header Authorization
 
 func main() {
-	db := infrastructure.NewDb()
+	cfg := config.Load()
+	logger.Init(cfg)
+
+	db, err := infrastructure.NewDb(cfg)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Falha ao inicializar banco de dados")
+	}
 
 	userRepo := &infrastructure.UserRepository{DB: db}
 	goalRepo := &infrastructure.GoalRepository{DB: db}
@@ -128,5 +136,13 @@ func main() {
 		}
 	}
 
-	router.Run(":8080")
+	serverAddr := ":" + cfg.Server.Port
+	logger.Info().
+		Str("address", serverAddr).
+		Str("environment", cfg.App.Environment).
+		Msg("Servidor iniciando")
+
+	if err := router.Run(serverAddr); err != nil {
+		logger.Fatal().Err(err).Msg("Falha ao iniciar servidor")
+	}
 }
