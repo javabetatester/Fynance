@@ -10,7 +10,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-
 func (h *Handler) Authenticate(c *gin.Context) {
 	var body contracts.AuthLoginRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
@@ -23,7 +22,8 @@ func (h *Handler) Authenticate(c *gin.Context) {
 		Password: body.Password,
 	}
 
-	userEntity, err := h.AuthService.Login(login)
+	ctx := c.Request.Context()
+	userEntity, err := h.AuthService.Login(ctx, login)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -35,7 +35,7 @@ func (h *Handler) Authenticate(c *gin.Context) {
 		return
 	}
 
-	token, err := h.JwtService.GenerateToken(userID)
+	token, err := h.JwtService.GenerateToken(ctx, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -61,7 +61,8 @@ func (h *Handler) Registration(c *gin.Context) {
 		Password: body.Password,
 	}
 
-	if err := h.AuthService.Register(&userEntity); err != nil {
+	ctx := c.Request.Context()
+	if err := h.AuthService.Register(ctx, &userEntity); err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
