@@ -41,7 +41,8 @@ func (h *Handler) CreateTransaction(c *gin.Context) {
 		Date:        utils.SetTimestamps(),
 	}
 
-	if err := h.TransactionService.CreateTransaction(&transactionEntity); err != nil {
+	ctx := c.Request.Context()
+	if err := h.TransactionService.CreateTransaction(ctx, &transactionEntity); err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
 	}
@@ -59,7 +60,8 @@ func (h *Handler) GetTransactions(c *gin.Context) {
 		return
 	}
 
-	transactions, err := h.TransactionService.GetAllTransactions(userID)
+	ctx := c.Request.Context()
+	transactions, err := h.TransactionService.GetAllTransactions(ctx, userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -81,7 +83,8 @@ func (h *Handler) GetTransaction(c *gin.Context) {
 		return
 	}
 
-	transactionEntity, err := h.TransactionService.GetTransactionByID(transactionID, userID)
+	ctx := c.Request.Context()
+	transactionEntity, err := h.TransactionService.GetTransactionByID(ctx, transactionID, userID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "transaction does not belong to user" {
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Transação não encontrada"})
@@ -133,7 +136,8 @@ func (h *Handler) UpdateTransaction(c *gin.Context) {
 		transactionEntity.Date = *body.Date
 	}
 
-	if err := h.TransactionService.UpdateTransaction(&transactionEntity); err != nil {
+	ctx := c.Request.Context()
+	if err := h.TransactionService.UpdateTransaction(ctx, &transactionEntity); err != nil {
 		if err.Error() == "transaction does not belong to user" || errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Transação não encontrada"})
 			return
@@ -158,7 +162,8 @@ func (h *Handler) DeleteTransaction(c *gin.Context) {
 		return
 	}
 
-	if err := h.TransactionService.DeleteTransaction(transactionID, userID); err != nil {
+	ctx := c.Request.Context()
+	if err := h.TransactionService.DeleteTransaction(ctx, transactionID, userID); err != nil {
 		if err.Error() == "transaction does not exist" || err.Error() == "transaction does not belong to user" || errors.Is(err, gorm.ErrRecordNotFound) {
 			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Transação não encontrada"})
 			return
