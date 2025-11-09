@@ -1,7 +1,7 @@
 package logger
 
 import (
-	"Fynance/internal/config"
+	"Fynance/config"
 	"os"
 	"time"
 
