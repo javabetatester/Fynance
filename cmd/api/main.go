@@ -19,16 +19,6 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
-// @title Fynance API
-// @version 1.0
-// @description API de gestão financeira pessoal (Fynance)
-// @BasePath /api
-// @schemes http
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Utilize "Bearer <token>" no header Authorization
-
 func main() {
 	cfg := config.Load()
 	logger.Init(cfg)
