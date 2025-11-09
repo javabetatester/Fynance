@@ -6,7 +6,7 @@ import (
 
 	"Fynance/internal/contracts"
 	"Fynance/internal/domain/transaction"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -26,7 +26,7 @@ func (h *Handler) CreateTransaction(c *gin.Context) {
 		return
 	}
 
-	categoryID, err := utils.ParseULID(body.CategoryID)
+	categoryID, err := pkg.ParseULID(body.CategoryID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -38,7 +38,7 @@ func (h *Handler) CreateTransaction(c *gin.Context) {
 		CategoryId:  categoryID,
 		Amount:      body.Amount,
 		Description: body.Description,
-		Date:        utils.SetTimestamps(),
+		Date:        pkg.SetTimestamps(),
 	}
 
 	ctx := c.Request.Context()
@@ -71,7 +71,7 @@ func (h *Handler) GetTransactions(c *gin.Context) {
 }
 
 func (h *Handler) GetTransaction(c *gin.Context) {
-	transactionID, err := utils.ParseULID(c.Param("id"))
+	transactionID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de transação inválido"})
 		return
@@ -98,7 +98,7 @@ func (h *Handler) GetTransaction(c *gin.Context) {
 }
 
 func (h *Handler) UpdateTransaction(c *gin.Context) {
-	transactionID, err := utils.ParseULID(c.Param("id"))
+	transactionID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de transação inválido"})
 		return
@@ -116,7 +116,7 @@ func (h *Handler) UpdateTransaction(c *gin.Context) {
 		return
 	}
 
-	categoryID, err := utils.ParseULID(body.CategoryID)
+	categoryID, err := pkg.ParseULID(body.CategoryID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -129,7 +129,7 @@ func (h *Handler) UpdateTransaction(c *gin.Context) {
 		Amount:      body.Amount,
 		Description: body.Description,
 		Type:        transaction.Types(body.Type),
-		UpdatedAt:   utils.SetTimestamps(),
+		UpdatedAt:   pkg.SetTimestamps(),
 	}
 
 	if body.Date != nil {
@@ -150,7 +150,7 @@ func (h *Handler) UpdateTransaction(c *gin.Context) {
 }
 
 func (h *Handler) DeleteTransaction(c *gin.Context) {
-	transactionID, err := utils.ParseULID(c.Param("id"))
+	transactionID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de transação inválido"})
 		return

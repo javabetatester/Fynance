@@ -2,7 +2,7 @@ package infrastructure
 
 import (
 	"Fynance/internal/domain/transaction"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 	"context"
 	"time"
 
@@ -28,22 +28,22 @@ type transactionDB struct {
 }
 
 func toDomainTransaction(tdb *transactionDB) (*transaction.Transaction, error) {
-	id, err := utils.ParseULID(tdb.Id)
+	id, err := pkg.ParseULID(tdb.Id)
 	if err != nil {
 		return nil, err
 	}
-	uid, err := utils.ParseULID(tdb.UserId)
+	uid, err := pkg.ParseULID(tdb.UserId)
 	if err != nil {
 		return nil, err
 	}
-	cid, err := utils.ParseULID(tdb.CategoryId)
+	cid, err := pkg.ParseULID(tdb.CategoryId)
 	if err != nil {
 		return nil, err
 	}
 
 	var invID *ulid.ULID
 	if tdb.InvestmentId != nil && *tdb.InvestmentId != "" {
-		parsed, err := utils.ParseULID(*tdb.InvestmentId)
+		parsed, err := pkg.ParseULID(*tdb.InvestmentId)
 		if err != nil {
 			return nil, err
 		}

@@ -4,7 +4,7 @@ import (
 	"Fynance/internal/contracts"
 	"Fynance/internal/domain/auth"
 	"Fynance/internal/domain/user"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +29,7 @@ func (h *Handler) Authenticate(c *gin.Context) {
 		return
 	}
 
-	userID, err := utils.ParseULID(userEntity.Id)
+	userID, err := pkg.ParseULID(userEntity.Id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
 		return

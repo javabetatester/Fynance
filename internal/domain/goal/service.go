@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"Fynance/internal/domain/user"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 	"fmt"
 	"time"
 
@@ -29,7 +29,7 @@ func (s *Service) CreateGoal(ctx context.Context, goal *GoalCreateRequest) error
 	now := time.Now()
 
 	goalEntity := &Goal{
-		Id:            utils.GenerateULIDObject(),
+		Id:            pkg.GenerateULIDObject(),
 		UserId:        goal.UserId,
 		Name:          goal.Name,
 		TargetAmount:  goal.Target,

@@ -374,7 +374,7 @@ Fynance/
 │   │   ├── transaction_category.go
 │   │   └── transaction.go
 │   └── utils/                         # Utilitários
-│       └── ulid_utils.go
+│       └── ulid_pkg.go
 ├── docs/                              # Documentação Swagger
 │   ├── docs.go
 │   ├── swagger.json

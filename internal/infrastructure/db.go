@@ -1,7 +1,7 @@
 package infrastructure
 
 import (
-	"Fynance/internal/config"
+	"Fynance/config"
 	"Fynance/internal/domain/goal"
 	"Fynance/internal/domain/investment"
 	"Fynance/internal/domain/transaction"

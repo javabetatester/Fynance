@@ -1,9 +1,8 @@
 package user
 
 import (
+	"Fynance/internal/pkg"
 	"context"
-
-	"Fynance/internal/utils"
 
 	"github.com/oklog/ulid/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -14,9 +13,9 @@ type Service struct {
 }
 
 func (s *Service) Create(ctx context.Context, user *User) error {
-	user.Id = utils.GenerateULID()
+	user.Id = pkg.GenerateULID()
 
-	now := utils.SetTimestamps()
+	now := pkg.SetTimestamps()
 	user.CreatedAt = now
 	user.UpdatedAt = now
 

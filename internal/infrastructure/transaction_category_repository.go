@@ -2,7 +2,7 @@ package infrastructure
 
 import (
 	"Fynance/internal/domain/transaction"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 	"context"
 	"time"
 
@@ -24,11 +24,11 @@ type categoryDB struct {
 }
 
 func toDomainCategory(cdb *categoryDB) (*transaction.Category, error) {
-	uid, err := utils.ParseULID(cdb.UserId)
+	uid, err := pkg.ParseULID(cdb.UserId)
 	if err != nil {
 		return nil, err
 	}
-	id, err := utils.ParseULID(cdb.Id)
+	id, err := pkg.ParseULID(cdb.Id)
 	if err != nil {
 		return nil, err
 	}

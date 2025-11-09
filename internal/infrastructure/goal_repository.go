@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"Fynance/internal/domain/goal"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 	"time"
 
 	"github.com/oklog/ulid/v2"
@@ -29,11 +29,11 @@ type goalDB struct {
 }
 
 func toDomainGoal(gdb *goalDB) (*goal.Goal, error) {
-	id, err := utils.ParseULID(gdb.Id)
+	id, err := pkg.ParseULID(gdb.Id)
 	if err != nil {
 		return nil, err
 	}
-	uid, err := utils.ParseULID(gdb.UserId)
+	uid, err := pkg.ParseULID(gdb.UserId)
 	if err != nil {
 		return nil, err
 	}

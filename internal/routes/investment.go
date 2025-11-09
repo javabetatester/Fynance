@@ -6,7 +6,7 @@ import (
 
 	"Fynance/internal/contracts"
 	"Fynance/internal/domain/investment"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -67,7 +67,7 @@ func (h *Handler) ListInvestments(c *gin.Context) {
 }
 
 func (h *Handler) GetInvestment(c *gin.Context) {
-	investmentID, err := utils.ParseULID(c.Param("id"))
+	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
@@ -90,7 +90,7 @@ func (h *Handler) GetInvestment(c *gin.Context) {
 }
 
 func (h *Handler) MakeContribution(c *gin.Context) {
-	investmentID, err := utils.ParseULID(c.Param("id"))
+	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
@@ -126,7 +126,7 @@ func (h *Handler) MakeContribution(c *gin.Context) {
 }
 
 func (h *Handler) MakeWithdraw(c *gin.Context) {
-	investmentID, err := utils.ParseULID(c.Param("id"))
+	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
@@ -165,7 +165,7 @@ func (h *Handler) MakeWithdraw(c *gin.Context) {
 }
 
 func (h *Handler) GetInvestmentReturn(c *gin.Context) {
-	investmentID, err := utils.ParseULID(c.Param("id"))
+	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
@@ -191,7 +191,7 @@ func (h *Handler) GetInvestmentReturn(c *gin.Context) {
 }
 
 func (h *Handler) DeleteInvestment(c *gin.Context) {
-	investmentID, err := utils.ParseULID(c.Param("id"))
+	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return
@@ -221,7 +221,7 @@ func (h *Handler) DeleteInvestment(c *gin.Context) {
 }
 
 func (h *Handler) UpdateInvestment(c *gin.Context) {
-	investmentID, err := utils.ParseULID(c.Param("id"))
+	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
 		return

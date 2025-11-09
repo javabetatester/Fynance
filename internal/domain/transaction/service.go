@@ -6,7 +6,7 @@ import (
 
 	"Fynance/internal/domain/user"
 	appErrors "Fynance/internal/errors"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 	"strings"
 	"time"
 
@@ -257,14 +257,14 @@ func (s *Service) GetNumberOfTransactions(ctx context.Context, userID ulid.ULID)
 }
 
 func TransactionCreateStruct(transaction *Transaction) {
-	transaction.Id = utils.GenerateULIDObject()
-	now := utils.SetTimestamps()
+	transaction.Id = pkg.GenerateULIDObject()
+	now := pkg.SetTimestamps()
 	transaction.CreatedAt = now
 	transaction.UpdatedAt = now
 }
 
 func CategoryCreateStruct(category *Category) {
-	category.Id = utils.GenerateULIDObject()
+	category.Id = pkg.GenerateULIDObject()
 	category.CreatedAt = time.Now()
 	category.UpdatedAt = time.Now()
 }

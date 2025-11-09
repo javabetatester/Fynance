@@ -1,7 +1,7 @@
 package main
 
 import (
-	"Fynance/internal/config"
+	"Fynance/config"
 	"Fynance/internal/domain/auth"
 	"Fynance/internal/domain/goal"
 	"Fynance/internal/domain/investment"

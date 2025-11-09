@@ -2,7 +2,7 @@ package infrastructure
 
 import (
 	"Fynance/internal/domain/investment"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 	"context"
 	"time"
 
@@ -28,11 +28,11 @@ type investmentDB struct {
 }
 
 func toDomainInvestment(idb *investmentDB) (*investment.Investment, error) {
-	id, err := utils.ParseULID(idb.Id)
+	id, err := pkg.ParseULID(idb.Id)
 	if err != nil {
 		return nil, err
 	}
-	uid, err := utils.ParseULID(idb.UserId)
+	uid, err := pkg.ParseULID(idb.UserId)
 	if err != nil {
 		return nil, err
 	}

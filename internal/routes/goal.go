@@ -6,7 +6,7 @@ import (
 
 	"Fynance/internal/contracts"
 	"Fynance/internal/domain/goal"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -60,7 +60,7 @@ func (h *Handler) UpdateGoal(c *gin.Context) {
 		return
 	}
 
-	goalID, err := utils.ParseULID(id)
+	goalID, err := pkg.ParseULID(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -107,7 +107,7 @@ func (h *Handler) GetGoal(c *gin.Context) {
 		return
 	}
 
-	goalID, err := utils.ParseULID(id)
+	goalID, err := pkg.ParseULID(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return
@@ -140,7 +140,7 @@ func (h *Handler) DeleteGoal(c *gin.Context) {
 		return
 	}
 
-	goalID, err := utils.ParseULID(id)
+	goalID, err := pkg.ParseULID(id)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
 		return

@@ -7,7 +7,7 @@ import (
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
 	"Fynance/internal/middleware"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 	"errors"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +29,7 @@ func (h *Handler) GetUserIDFromContext(c *gin.Context) (ulid.ULID, error) {
 		return ulid.ULID{}, errors.New("user not authenticated")
 	}
 
-	userID, err := utils.ParseULID(userIDStr.(string))
+	userID, err := pkg.ParseULID(userIDStr.(string))
 	if err != nil {
 		return ulid.ULID{}, err
 	}

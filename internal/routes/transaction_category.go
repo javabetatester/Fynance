@@ -6,7 +6,7 @@ import (
 
 	"Fynance/internal/contracts"
 	"Fynance/internal/domain/transaction"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -58,7 +58,7 @@ func (h *Handler) ListCategories(c *gin.Context) {
 }
 
 func (h *Handler) UpdateCategory(c *gin.Context) {
-	categoryID, err := utils.ParseULID(c.Param("id"))
+	categoryID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de categoria inválido"})
 		return
@@ -101,7 +101,7 @@ func (h *Handler) UpdateCategory(c *gin.Context) {
 }
 
 func (h *Handler) DeleteCategory(c *gin.Context) {
-	categoryID, err := utils.ParseULID(c.Param("id"))
+	categoryID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de categoria inválido"})
 		return

@@ -5,7 +5,7 @@ import (
 
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
-	"Fynance/internal/utils"
+	"Fynance/internal/pkg"
 	"errors"
 	"strings"
 	"time"
@@ -27,7 +27,7 @@ func NewService(repo Repository, transactionRepo transaction.Repository) *Servic
 }
 
 func (s *Service) CreateInvestment(ctx context.Context, req CreateInvestmentRequest) (*Investment, error) {
-	investmentId := utils.GenerateULIDObject()
+	investmentId := pkg.GenerateULIDObject()
 
 	if err := s.ensureUserExists(ctx, req.UserId); err != nil {
 		return nil, err
@@ -205,7 +205,7 @@ func (s *Service) UpdateInvestment(ctx context.Context, investmentId, userId uli
 }
 
 func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, InvestmentId ulid.ULID) (*Investment, error) {
-	now := utils.SetTimestamps()
+	now := pkg.SetTimestamps()
 
 	investment := &Investment{
 		Id:              InvestmentId,
@@ -224,10 +224,10 @@ func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, Investment
 }
 
 func (s *Service) CreateTransactionStruct(req CreateInvestmentRequest, InvestmentId ulid.ULID) (*transaction.Transaction, error) {
-	now := utils.SetTimestamps()
+	now := pkg.SetTimestamps()
 
 	return &transaction.Transaction{
-		Id:           utils.GenerateULIDObject(),
+		Id:           pkg.GenerateULIDObject(),
 		UserId:       req.UserId,
 		Type:         transaction.Investment,
 		Amount:       req.InitialAmount,
@@ -249,10 +249,10 @@ func (s *Service) makeInvestmentMovement(investmentId, userId ulid.ULID, amount 
 		}
 	}
 
-	now := utils.SetTimestamps()
+	now := pkg.SetTimestamps()
 
 	return &transaction.Transaction{
-		Id:           utils.GenerateULIDObject(),
+		Id:           pkg.GenerateULIDObject(),
 		UserId:       userId,
 		Type:         movementType,
 		Amount:       amount,
