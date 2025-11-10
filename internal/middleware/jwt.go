@@ -7,25 +7,42 @@ import (
 	"net/http"
 	"strings"
 
+	appErrors "Fynance/internal/errors"
+
 	"github.com/gin-gonic/gin"
 )
+
+func respondOwnership(c *gin.Context, err *appErrors.AppError) {
+	payload := gin.H{
+		"error":   err.Code,
+		"message": err.Message,
+	}
+	if len(err.Details) > 0 {
+		payload["details"] = err.Details
+	}
+	c.JSON(err.StatusCode, payload)
+	c.Abort()
+}
 
 func RequireOwnership() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDFromToken, exists := c.Get("user_id")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort()
+			respondOwnership(c, appErrors.ErrUnauthorized)
 			return
 		}
 
-		tokenUserID := userIDFromToken.(string)
+		tokenUserID, ok := userIDFromToken.(string)
+		if !ok || tokenUserID == "" {
+			err := appErrors.ErrUnauthorized.WithDetails(map[string]interface{}{"reason": "user_id_invalid"})
+			respondOwnership(c, err)
+			return
+		}
 
 		for _, param := range c.Params {
 			if strings.EqualFold(param.Key, "user_id") || strings.EqualFold(param.Key, "userid") {
 				if !strings.EqualFold(tokenUserID, param.Value) {
-					c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
-					c.Abort()
+					respondOwnership(c, appErrors.ErrResourceNotOwned)
 					return
 				}
 			}
@@ -33,8 +50,7 @@ func RequireOwnership() gin.HandlerFunc {
 
 		if userIDQuery := c.Query("user_id"); userIDQuery != "" {
 			if !strings.EqualFold(tokenUserID, userIDQuery) {
-				c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
-				c.Abort()
+				respondOwnership(c, appErrors.ErrResourceNotOwned)
 				return
 			}
 		}
@@ -46,8 +62,7 @@ func RequireOwnership() gin.HandlerFunc {
 
 		bodyBytes, err := io.ReadAll(c.Request.Body)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot read body"})
-			c.Abort()
+			respondOwnership(c, appErrors.ErrBadRequest.WithError(err))
 			return
 		}
 
@@ -60,8 +75,7 @@ func RequireOwnership() gin.HandlerFunc {
 
 		var bodyData map[string]interface{}
 		if err := json.Unmarshal(bodyBytes, &bodyData); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
-			c.Abort()
+			respondOwnership(c, appErrors.ErrBadRequest.WithError(err))
 			return
 		}
 
@@ -69,13 +83,12 @@ func RequireOwnership() gin.HandlerFunc {
 			if val, ok := bodyData[key]; ok {
 				idStr, ok := val.(string)
 				if !ok {
-					c.JSON(http.StatusBadRequest, gin.H{"error": "user_id must be a string"})
-					c.Abort()
+					err := appErrors.NewValidationError("user_id", "deve ser uma string")
+					respondOwnership(c, err)
 					return
 				}
 				if !strings.EqualFold(tokenUserID, idStr) {
-					c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
-					c.Abort()
+					respondOwnership(c, appErrors.ErrResourceNotOwned)
 					return
 				}
 			}
