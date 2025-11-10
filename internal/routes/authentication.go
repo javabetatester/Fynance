@@ -1,11 +1,13 @@
 package routes
 
 import (
+	"net/http"
+
 	"Fynance/internal/contracts"
 	"Fynance/internal/domain/auth"
 	"Fynance/internal/domain/user"
+	appErrors "Fynance/internal/errors"
 	"Fynance/internal/pkg"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -13,7 +15,7 @@ import (
 func (h *Handler) Authenticate(c *gin.Context) {
 	var body contracts.AuthLoginRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.ErrBadRequest.WithError(err))
 		return
 	}
 
@@ -25,19 +27,19 @@ func (h *Handler) Authenticate(c *gin.Context) {
 	ctx := c.Request.Context()
 	userEntity, err := h.AuthService.Login(ctx, login)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	userID, err := pkg.ParseULID(userEntity.Id)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.ErrInternalServer.WithError(err))
 		return
 	}
 
 	token, err := h.JwtService.GenerateToken(ctx, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.ErrInternalServer.WithError(err))
 		return
 	}
 
@@ -51,7 +53,7 @@ func (h *Handler) Authenticate(c *gin.Context) {
 func (h *Handler) Registration(c *gin.Context) {
 	var body contracts.AuthRegisterRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.ErrBadRequest.WithError(err))
 		return
 	}
 
@@ -63,7 +65,7 @@ func (h *Handler) Registration(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	if err := h.AuthService.Register(ctx, &userEntity); err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
