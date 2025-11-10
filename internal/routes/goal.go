@@ -1,27 +1,25 @@
 package routes
 
 import (
-	"errors"
-	"net/http"
-
 	"Fynance/internal/contracts"
 	"Fynance/internal/domain/goal"
+	appErrors "Fynance/internal/errors"
 	"Fynance/internal/pkg"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func (h *Handler) CreateGoal(c *gin.Context) {
 	var body contracts.GoalCreateRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.ErrBadRequest.WithError(err))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -34,7 +32,7 @@ func (h *Handler) CreateGoal(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	if err := h.GoalService.CreateGoal(ctx, &req); err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -44,25 +42,25 @@ func (h *Handler) CreateGoal(c *gin.Context) {
 func (h *Handler) UpdateGoal(c *gin.Context) {
 	var body contracts.GoalUpdateRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.ErrBadRequest.WithError(err))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id é obrigatório"})
+		h.respondError(c, appErrors.NewValidationError("id", "é obrigatório"))
 		return
 	}
 
 	goalID, err := pkg.ParseULID(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
@@ -76,7 +74,7 @@ func (h *Handler) UpdateGoal(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	if err := h.GoalService.UpdateGoal(ctx, &req); err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -86,14 +84,14 @@ func (h *Handler) UpdateGoal(c *gin.Context) {
 func (h *Handler) ListGoals(c *gin.Context) {
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 	goals, err := h.GoalService.GetGoalsByUserID(ctx, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -103,30 +101,26 @@ func (h *Handler) ListGoals(c *gin.Context) {
 func (h *Handler) GetGoal(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id é obrigatório"})
+		h.respondError(c, appErrors.NewValidationError("id", "é obrigatório"))
 		return
 	}
 
 	goalID, err := pkg.ParseULID(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 	goalEntity, err := h.GoalService.GetGoalByID(ctx, goalID, userID)
 	if err != nil {
-		if err.Error() == "goal does not belong to user" || errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Meta não encontrada"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -136,29 +130,25 @@ func (h *Handler) GetGoal(c *gin.Context) {
 func (h *Handler) DeleteGoal(c *gin.Context) {
 	id := c.Param("id")
 	if id == "" {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id é obrigatório"})
+		h.respondError(c, appErrors.NewValidationError("id", "é obrigatório"))
 		return
 	}
 
 	goalID, err := pkg.ParseULID(id)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 	if err := h.GoalService.DeleteGoal(ctx, goalID, userID); err != nil {
-		if err.Error() == "goal does not belong to user" || errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Meta não encontrada"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
