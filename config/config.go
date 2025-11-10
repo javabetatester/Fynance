@@ -1,8 +1,10 @@
 package config
 
 import (
+	"fmt"
 	"os"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -45,20 +47,34 @@ type AppConfig struct {
 	LogLevel    string
 }
 
-func Load() *Config {
-	return &Config{
-		Database: loadDatabaseConfig(),
-		Server:   loadServerConfig(),
-		JWT:      loadJWTConfig(),
-		App:      loadAppConfig(),
+func Load() (*Config, error) {
+	database, err := loadDatabaseConfig()
+	if err != nil {
+		return nil, err
 	}
+	jwtCfg, err := loadJWTConfig()
+	if err != nil {
+		return nil, err
+	}
+	return &Config{
+		Database: database,
+		Server:   loadServerConfig(),
+		JWT:      jwtCfg,
+		App:      loadAppConfig(),
+	}, nil
 }
 
-func loadDatabaseConfig() DatabaseConfig {
+func loadDatabaseConfig() (DatabaseConfig, error) {
 	host := getEnv("DB_HOST", "localhost")
 	port := getEnvAsInt("DB_PORT", 5432)
-	user := getEnv("DB_USER", "postgres")
-	password := getEnv("DB_PASSWORD", "admin")
+	user, err := requireEnv("DB_USER")
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
+	password, err := requireEnv("DB_PASSWORD")
+	if err != nil {
+		return DatabaseConfig{}, err
+	}
 	dbName := getEnv("DB_NAME", "postgres")
 	sslMode := getEnv("DB_SSL_MODE", "disable")
 	timeZone := getEnv("DB_TIMEZONE", "UTC")
@@ -80,7 +96,7 @@ func loadDatabaseConfig() DatabaseConfig {
 		MaxOpenConns:    maxOpenConns,
 		MaxIdleConns:    maxIdleConns,
 		ConnMaxLifetime: connMaxLifetime,
-	}
+	}, nil
 }
 
 func loadServerConfig() ServerConfig {
@@ -97,8 +113,14 @@ func loadServerConfig() ServerConfig {
 	}
 }
 
-func loadJWTConfig() JWTConfig {
-	secretKey := getEnv("JWT_SECRET_KEY", "fynance_secure_jwt_secret_key_2024")
+func loadJWTConfig() (JWTConfig, error) {
+	secretKey, err := requireEnv("JWT_SECRET_KEY")
+	if err != nil {
+		return JWTConfig{}, err
+	}
+	if len(secretKey) < 32 {
+		return JWTConfig{}, fmt.Errorf("JWT_SECRET_KEY deve possuir no mínimo 32 caracteres")
+	}
 	issuer := getEnv("JWT_ISSUER", "fynance_api")
 	expiresIn := getEnvAsDuration("JWT_EXPIRES_IN", 24*time.Hour)
 
@@ -106,7 +128,7 @@ func loadJWTConfig() JWTConfig {
 		SecretKey: secretKey,
 		Issuer:    issuer,
 		ExpiresIn: expiresIn,
-	}
+	}, nil
 }
 
 func loadAppConfig() AppConfig {
@@ -156,4 +178,12 @@ func getEnvAsDuration(key string, defaultValue time.Duration) time.Duration {
 		return duration
 	}
 	return defaultValue
+}
+
+func requireEnv(key string) (string, error) {
+	value := strings.TrimSpace(os.Getenv(key))
+	if value == "" {
+		return "", fmt.Errorf("%s precisa ser definido", key)
+	}
+	return value, nil
 }
