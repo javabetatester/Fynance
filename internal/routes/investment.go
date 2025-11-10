@@ -1,27 +1,26 @@
 package routes
 
 import (
-	"errors"
 	"net/http"
 
 	"Fynance/internal/contracts"
 	"Fynance/internal/domain/investment"
+	appErrors "Fynance/internal/errors"
 	"Fynance/internal/pkg"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func (h *Handler) CreateInvestment(c *gin.Context) {
 	var body contracts.InvestmentCreateRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.ErrBadRequest.WithError(err))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -36,7 +35,7 @@ func (h *Handler) CreateInvestment(c *gin.Context) {
 	ctx := c.Request.Context()
 	inv, err := h.InvestmentService.CreateInvestment(ctx, req)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -49,14 +48,14 @@ func (h *Handler) CreateInvestment(c *gin.Context) {
 func (h *Handler) ListInvestments(c *gin.Context) {
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 	investments, err := h.InvestmentService.ListInvestments(ctx, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -69,20 +68,20 @@ func (h *Handler) ListInvestments(c *gin.Context) {
 func (h *Handler) GetInvestment(c *gin.Context) {
 	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 	inv, err := h.InvestmentService.GetInvestment(ctx, investmentID, userID)
 	if err != nil {
-		c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
+		h.respondError(c, err)
 		return
 	}
 
@@ -92,33 +91,25 @@ func (h *Handler) GetInvestment(c *gin.Context) {
 func (h *Handler) MakeContribution(c *gin.Context) {
 	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	var body contracts.InvestmentContributionRequest
 	if errs := c.ShouldBindJSON(&body); errs != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: errs.Error()})
+		h.respondError(c, appErrors.ErrBadRequest.WithError(errs))
 		return
 	}
 
 	ctx := c.Request.Context()
 	if err := h.InvestmentService.MakeContribution(ctx, investmentID, userID, body.Amount, body.Description); err != nil {
-		switch err.Error() {
-		case "investment not found":
-			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
-			return
-		case "amount must be greater than 0":
-			c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "valor do aporte deve ser maior que zero"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -128,36 +119,25 @@ func (h *Handler) MakeContribution(c *gin.Context) {
 func (h *Handler) MakeWithdraw(c *gin.Context) {
 	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	var body contracts.InvestmentWithdrawRequest
 	if errs := c.ShouldBindJSON(&body); errs != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: errs.Error()})
+		h.respondError(c, appErrors.ErrBadRequest.WithError(errs))
 		return
 	}
 
 	ctx := c.Request.Context()
 	if err := h.InvestmentService.MakeWithdraw(ctx, investmentID, userID, body.Amount, body.Description); err != nil {
-		switch err.Error() {
-		case "investment not found":
-			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
-			return
-		case "insufficient balance in investment":
-			c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "saldo insuficiente no investimento"})
-			return
-		case "amount must be greater than 0":
-			c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "valor deve ser maior que zero"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -167,20 +147,20 @@ func (h *Handler) MakeWithdraw(c *gin.Context) {
 func (h *Handler) GetInvestmentReturn(c *gin.Context) {
 	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 	profit, returnPercentage, err := h.InvestmentService.CalculateReturn(ctx, investmentID, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -193,27 +173,19 @@ func (h *Handler) GetInvestmentReturn(c *gin.Context) {
 func (h *Handler) DeleteInvestment(c *gin.Context) {
 	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 	if err := h.InvestmentService.DeleteInvestment(ctx, investmentID, userID); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "investment not found" {
-			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
-			return
-		}
-		if err.Error() == "cannot delete investment with balance" {
-			c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "não é possível excluir investimento com saldo"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -223,19 +195,19 @@ func (h *Handler) DeleteInvestment(c *gin.Context) {
 func (h *Handler) UpdateInvestment(c *gin.Context) {
 	investmentID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de investimento inválido"})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	var body contracts.InvestmentUpdateRequest
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.ErrBadRequest.WithError(err))
 		return
 	}
 
@@ -256,15 +228,7 @@ func (h *Handler) UpdateInvestment(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	if err := h.InvestmentService.UpdateInvestment(ctx, investmentID, userID, updateReq); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "investment not found" {
-			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "investimento não encontrado"})
-			return
-		}
-		if err.Error() == "name is required" {
-			c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "nome é obrigatório"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
