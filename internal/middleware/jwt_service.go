@@ -2,10 +2,10 @@ package middleware
 
 import (
 	"context"
+	"errors"
 
+	"Fynance/config"
 	"Fynance/internal/domain/user"
-	"os"
-	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/oklog/ulid/v2"
@@ -14,25 +14,23 @@ import (
 type JwtService struct {
 	secretKey   string
 	issuer      string
+	tokenTTL    int64
+	parser      *jwt.Parser
 	userService *user.Service
 }
 
-func NewJwtService(userService *user.Service) *JwtService {
-	secretKey := os.Getenv("JWT_SECRET_KEY")
-	if secretKey == "" {
-		secretKey = "fynance_secure_jwt_secret_key_2024"
+func NewJwtService(settings config.JWTConfig, userService *user.Service) (*JwtService, error) {
+	if settings.ExpiresIn <= 0 {
+		return nil, errors.New("JWT_EXPIRES_IN inválido")
 	}
-
-	issuer := os.Getenv("JWT_ISSUER")
-	if issuer == "" {
-		issuer = "fynance_api"
-	}
-
+	parser := &jwt.Parser{ValidMethods: []string{jwt.SigningMethodHS256.Name}}
 	return &JwtService{
-		secretKey:   secretKey,
-		issuer:      issuer,
+		secretKey:   settings.SecretKey,
+		issuer:      settings.Issuer,
+		tokenTTL:    int64(settings.ExpiresIn.Seconds()),
+		parser:      parser,
 		userService: userService,
-	}
+	}, nil
 }
 
 type Claim struct {
@@ -46,61 +44,60 @@ func (s *JwtService) GenerateToken(ctx context.Context, id ulid.ULID) (string, e
 	if err != nil {
 		return "", err
 	}
-
+	now := jwt.TimeFunc().Unix()
 	claim := &Claim{
 		Sub:  id.String(),
 		Plan: plan,
 		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 24).Unix(),
-			IssuedAt:  time.Now().Unix(),
+			ExpiresAt: now + s.tokenTTL,
+			IssuedAt:  now,
 			Issuer:    s.issuer,
 		},
 	}
-
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claim)
 	return token.SignedString([]byte(s.secretKey))
 }
 
 func (s *JwtService) ValidateToken(tokenString string) bool {
-	token, err := jwt.ParseWithClaims(tokenString, &Claim{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, jwt.NewValidationError("método de assinatura inválido", jwt.ValidationErrorSignatureInvalid)
-		}
-		return []byte(s.secretKey), nil
-	})
-
+	claims, err := s.parse(tokenString)
 	if err != nil {
 		return false
 	}
-
-	claims, ok := token.Claims.(*Claim)
-	if !ok || !token.Valid {
+	now := jwt.TimeFunc().Unix()
+	if !claims.VerifyIssuer(s.issuer, true) {
 		return false
 	}
-
-	return claims.ExpiresAt > time.Now().Unix()
+	if !claims.VerifyExpiresAt(now, true) {
+		return false
+	}
+	return true
 }
 
 func (s *JwtService) ParseToken(tokenString string) (*Claim, error) {
-	token, err := jwt.ParseWithClaims(tokenString, &Claim{}, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, jwt.NewValidationError("método de assinatura inválido", jwt.ValidationErrorSignatureInvalid)
-		}
-		return []byte(s.secretKey), nil
-	})
-
+	claims, err := s.parse(tokenString)
 	if err != nil {
 		return nil, err
 	}
+	now := jwt.TimeFunc().Unix()
+	if !claims.VerifyIssuer(s.issuer, true) {
+		return nil, jwt.NewValidationError("emissor inválido", jwt.ValidationErrorIssuer)
+	}
+	if !claims.VerifyExpiresAt(now, true) {
+		return nil, jwt.NewValidationError("token expirado", jwt.ValidationErrorExpired)
+	}
+	return claims, nil
+}
 
+func (s *JwtService) parse(tokenString string) (*Claim, error) {
+	token, err := s.parser.ParseWithClaims(tokenString, &Claim{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(s.secretKey), nil
+	})
+	if err != nil {
+		return nil, err
+	}
 	claims, ok := token.Claims.(*Claim)
 	if !ok || !token.Valid {
 		return nil, jwt.NewValidationError("token inválido", jwt.ValidationErrorClaimsInvalid)
 	}
-
-	if claims.ExpiresAt < time.Now().Unix() {
-		return nil, jwt.NewValidationError("token expirado", jwt.ValidationErrorExpired)
-	}
-
 	return claims, nil
 }
