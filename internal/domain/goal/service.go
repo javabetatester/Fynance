@@ -2,11 +2,11 @@ package goal
 
 import (
 	"context"
+	"time"
 
 	"Fynance/internal/domain/user"
+	appErrors "Fynance/internal/errors"
 	"Fynance/internal/pkg"
-	"fmt"
-	"time"
 
 	"github.com/oklog/ulid/v2"
 )
@@ -16,63 +16,58 @@ type Service struct {
 	UserService user.Service
 }
 
-func (s *Service) CreateGoal(ctx context.Context, goal *GoalCreateRequest) error {
-	err := Validate(*goal)
-	if err != nil {
+func (s *Service) CreateGoal(ctx context.Context, request *GoalCreateRequest) error {
+	if err := Validate(*request); err != nil {
 		return err
 	}
 
-	if _, err := s.UserService.GetByID(ctx, goal.UserId.String()); err != nil {
-		return fmt.Errorf("user not found")
+	if _, err := s.UserService.GetByID(ctx, request.UserId.String()); err != nil {
+		return appErrors.ErrUserNotFound.WithError(err)
 	}
 
 	now := time.Now()
-
-	goalEntity := &Goal{
+	entity := &Goal{
 		Id:            pkg.GenerateULIDObject(),
-		UserId:        goal.UserId,
-		Name:          goal.Name,
-		TargetAmount:  goal.Target,
+		UserId:        request.UserId,
+		Name:          request.Name,
+		TargetAmount:  request.Target,
 		CurrentAmount: 0,
 		StartedAt:     now,
-		EndedAt:       goal.EndedAt,
+		EndedAt:       request.EndedAt,
 		Status:        Active,
 		CreatedAt:     now,
 		UpdatedAt:     now,
 	}
 
-	return s.Repository.Create(ctx, goalEntity)
+	return s.Repository.Create(ctx, entity)
 }
 
-func (s *Service) UpdateGoal(ctx context.Context, goal *GoalUpdateRequest) error {
-	err := ValidateUpdateGoal(*goal)
+func (s *Service) UpdateGoal(ctx context.Context, request *GoalUpdateRequest) error {
+	if err := ValidateUpdateGoal(*request); err != nil {
+		return err
+	}
+
+	if err := s.CheckGoalBelongsToUser(ctx, request.Id, request.UserId); err != nil {
+		return err
+	}
+
+	current, err := s.Repository.GetById(ctx, request.Id)
 	if err != nil {
 		return err
 	}
 
-	err = s.CheckGoalBelongsToUser(ctx, goal.Id, goal.UserId)
-	if err != nil {
-		return err
-	}
+	current.Name = request.Name
+	current.TargetAmount = request.Target
+	current.EndedAt = request.EndedAt
+	current.UpdatedAt = time.Now()
 
-	currentGoal, err := s.Repository.GetById(ctx, goal.Id)
-	if err != nil {
-		return err
-	}
-
-	currentGoal.Name = goal.Name
-	currentGoal.TargetAmount = goal.Target
-	currentGoal.EndedAt = goal.EndedAt
-	currentGoal.UpdatedAt = time.Now()
-
-	return s.Repository.Update(ctx, currentGoal)
+	return s.Repository.Update(ctx, current)
 }
 
 func (s *Service) DeleteGoal(ctx context.Context, goalID ulid.ULID, userID ulid.ULID) error {
 	if err := s.CheckGoalBelongsToUser(ctx, goalID, userID); err != nil {
 		return err
 	}
-
 	return s.Repository.Delete(ctx, goalID)
 }
 
@@ -81,11 +76,9 @@ func (s *Service) GetGoalByID(ctx context.Context, goalID ulid.ULID, userID ulid
 	if err != nil {
 		return nil, err
 	}
-
 	if goal.UserId != userID {
-		return nil, fmt.Errorf("goal does not belong to user")
+		return nil, appErrors.ErrResourceNotOwned
 	}
-
 	return goal, nil
 }
 
@@ -103,35 +96,33 @@ func (s *Service) CheckGoalBelongsToUser(ctx context.Context, goalID ulid.ULID, 
 		return err
 	}
 	if !userBelongs {
-		return fmt.Errorf("goal does not belong to user")
+		return appErrors.ErrResourceNotOwned
 	}
-
 	return nil
 }
 
-func Validate(goal GoalCreateRequest) error {
-	if goal.Name == "" {
-		return fmt.Errorf("name is required")
+func Validate(request GoalCreateRequest) error {
+	if request.Name == "" {
+		return appErrors.NewValidationError("name", "é obrigatório")
 	}
-	if goal.Target <= 0 {
-		return fmt.Errorf("target must be greater than 0")
+	if request.Target <= 0 {
+		return appErrors.NewValidationError("target", "deve ser maior que zero")
 	}
-	if goal.EndedAt != nil && goal.EndedAt.Before(time.Now()) {
-		return fmt.Errorf("ended_at must be in the future")
+	if request.EndedAt != nil && request.EndedAt.Before(time.Now()) {
+		return appErrors.NewValidationError("ended_at", "deve ser uma data futura")
 	}
-
 	return nil
 }
 
-func ValidateUpdateGoal(goal GoalUpdateRequest) error {
-	if goal.Name == "" {
-		return fmt.Errorf("name is required")
+func ValidateUpdateGoal(request GoalUpdateRequest) error {
+	if request.Name == "" {
+		return appErrors.NewValidationError("name", "é obrigatório")
 	}
-	if goal.Target <= 0 {
-		return fmt.Errorf("target must be greater than 0")
+	if request.Target <= 0 {
+		return appErrors.NewValidationError("target", "deve ser maior que zero")
 	}
-	if goal.EndedAt != nil && goal.EndedAt.Before(time.Now()) {
-		return fmt.Errorf("ended_at must be in the future")
+	if request.EndedAt != nil && request.EndedAt.Before(time.Now()) {
+		return appErrors.NewValidationError("ended_at", "deve ser uma data futura")
 	}
 	return nil
 }
