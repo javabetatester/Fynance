@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"Fynance/config"
 	"Fynance/internal/domain/auth"
 	"Fynance/internal/domain/goal"
@@ -20,7 +22,10 @@ import (
 )
 
 func main() {
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 	logger.Init(cfg)
 
 	db, err := infrastructure.NewDb(cfg)
@@ -60,7 +65,10 @@ func main() {
 		UserService:     &userService,
 	}
 
-	jwtService := middleware.NewJwtService(&userService)
+	jwtService, err := middleware.NewJwtService(cfg.JWT, &userService)
+	if err != nil {
+		logger.Fatal().Err(err).Msg("Falha ao inicializar serviço JWT")
+	}
 
 	handler := routes.Handler{
 		UserService:        userService,
