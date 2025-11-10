@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strings"
 
+	"Fynance/internal/logger"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -11,13 +13,15 @@ func AuthMiddleware(jwtService *JwtService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
+			logger.Warn().Str("path", c.FullPath()).Msg("authorization header ausente")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "auth_required"})
 			c.Abort()
 			return
 		}
 
 		if !strings.HasPrefix(authHeader, "Bearer ") {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header must start with Bearer"})
+			logger.Warn().Str("path", c.FullPath()).Msg("authorization header inválido")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_token"})
 			c.Abort()
 			return
 		}
@@ -26,7 +30,8 @@ func AuthMiddleware(jwtService *JwtService) gin.HandlerFunc {
 
 		claims, err := jwtService.ParseToken(tokenString)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token", "details": err.Error()})
+			logger.Warn().Str("path", c.FullPath()).Msg("token inválido")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid_token"})
 			c.Abort()
 			return
 		}
