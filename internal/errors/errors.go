@@ -22,7 +22,7 @@ var (
 	ErrGoalNotFound        = NewAppError("GOAL_NOT_FOUND", "Meta não encontrada", http.StatusNotFound)
 	ErrInvestmentNotFound  = NewAppError("INVESTMENT_NOT_FOUND", "Investimento não encontrado", http.StatusNotFound)
 	ErrCategoryNotFound    = NewAppError("CATEGORY_NOT_FOUND", "Categoria não encontrada", http.StatusNotFound)
-	ErrResourceNotOwned     = NewAppError("RESOURCE_NOT_OWNED", "Recurso não pertence ao usuário", http.StatusForbidden)
+	ErrResourceNotOwned    = NewAppError("RESOURCE_NOT_OWNED", "Recurso não pertence ao usuário", http.StatusForbidden)
 )
 
 type AppError struct {
@@ -45,13 +45,22 @@ func (e *AppError) Unwrap() error {
 }
 
 func (e *AppError) WithDetails(details map[string]interface{}) *AppError {
-	e.Details = details
-	return e
+	clone := e.clone()
+	if details == nil {
+		clone.Details = make(map[string]interface{})
+		return clone
+	}
+	clone.Details = make(map[string]interface{}, len(details))
+	for k, v := range details {
+		clone.Details[k] = v
+	}
+	return clone
 }
 
 func (e *AppError) WithError(err error) *AppError {
-	e.Err = err
-	return e
+	clone := e.clone()
+	clone.Err = err
+	return clone
 }
 
 func NewAppError(code, message string, statusCode int) *AppError {
@@ -71,6 +80,22 @@ func WrapError(err error, code, message string, statusCode int) *AppError {
 		Err:        err,
 		Details:    make(map[string]interface{}),
 	}
+}
+
+func (e *AppError) clone() *AppError {
+	if e == nil {
+		return nil
+	}
+	clone := *e
+	if e.Details != nil {
+		clone.Details = make(map[string]interface{}, len(e.Details))
+		for k, v := range e.Details {
+			clone.Details[k] = v
+		}
+	} else {
+		clone.Details = make(map[string]interface{})
+	}
+	return &clone
 }
 
 func IsAppError(err error) bool {
@@ -132,4 +157,3 @@ func NewConflictError(resource string) *AppError {
 		},
 	}
 }
-
