@@ -2,8 +2,10 @@ package infrastructure
 
 import (
 	"context"
+	"errors"
 
 	"Fynance/internal/domain/goal"
+	appErrors "Fynance/internal/errors"
 	"Fynance/internal/pkg"
 	"time"
 
@@ -31,11 +33,11 @@ type goalDB struct {
 func toDomainGoal(gdb *goalDB) (*goal.Goal, error) {
 	id, err := pkg.ParseULID(gdb.Id)
 	if err != nil {
-		return nil, err
+		return nil, appErrors.ErrInternalServer.WithError(err)
 	}
 	uid, err := pkg.ParseULID(gdb.UserId)
 	if err != nil {
-		return nil, err
+		return nil, appErrors.ErrInternalServer.WithError(err)
 	}
 	return &goal.Goal{
 		Id:            id,
@@ -68,17 +70,30 @@ func toDBGoal(g *goal.Goal) *goalDB {
 
 func (r *GoalRepository) Create(ctx context.Context, g *goal.Goal) error {
 	gdb := toDBGoal(g)
-	return r.DB.WithContext(ctx).Table("goals").Create(&gdb).Error
+	if err := r.DB.WithContext(ctx).Table("goals").Create(&gdb).Error; err != nil {
+		return appErrors.NewDatabaseError(err)
+	}
+	return nil
 }
 
 func (r *GoalRepository) Delete(ctx context.Context, id ulid.ULID) error {
-	return r.DB.WithContext(ctx).Table("goals").Where("id = ?", id.String()).Delete(&goalDB{}).Error
+	result := r.DB.WithContext(ctx).Table("goals").Where("id = ?", id.String()).Delete(&goalDB{})
+	if result.Error != nil {
+		return appErrors.NewDatabaseError(result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return appErrors.ErrGoalNotFound
+	}
+	return nil
 }
 
 func (r *GoalRepository) GetById(ctx context.Context, id ulid.ULID) (*goal.Goal, error) {
 	var gdb goalDB
 	if err := r.DB.WithContext(ctx).Table("goals").Where("id = ?", id.String()).First(&gdb).Error; err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, appErrors.ErrGoalNotFound.WithError(err)
+		}
+		return nil, appErrors.NewDatabaseError(err)
 	}
 	return toDomainGoal(&gdb)
 }
@@ -86,7 +101,7 @@ func (r *GoalRepository) GetById(ctx context.Context, id ulid.ULID) (*goal.Goal,
 func (r *GoalRepository) GetByUserId(ctx context.Context, userID ulid.ULID) ([]*goal.Goal, error) {
 	var rows []goalDB
 	if err := r.DB.WithContext(ctx).Table("goals").Where("user_id = ?", userID.String()).Find(&rows).Error; err != nil {
-		return nil, err
+		return nil, appErrors.NewDatabaseError(err)
 	}
 	out := make([]*goal.Goal, 0, len(rows))
 	for i := range rows {
@@ -102,9 +117,8 @@ func (r *GoalRepository) GetByUserId(ctx context.Context, userID ulid.ULID) ([]*
 func (r *GoalRepository) List(ctx context.Context) ([]*goal.Goal, error) {
 	var rows []goalDB
 	if err := r.DB.WithContext(ctx).Table("goals").Find(&rows).Error; err != nil {
-		return nil, err
+		return nil, appErrors.NewDatabaseError(err)
 	}
-
 	out := make([]*goal.Goal, 0, len(rows))
 	for i := range rows {
 		g, err := toDomainGoal(&rows[i])
@@ -118,19 +132,23 @@ func (r *GoalRepository) List(ctx context.Context) ([]*goal.Goal, error) {
 
 func (r *GoalRepository) Update(ctx context.Context, g *goal.Goal) error {
 	gdb := toDBGoal(g)
-	return r.DB.WithContext(ctx).Table("goals").Where("id = ?", gdb.Id).Updates(&gdb).Error
+	if err := r.DB.WithContext(ctx).Table("goals").Where("id = ?", gdb.Id).Updates(&gdb).Error; err != nil {
+		return appErrors.NewDatabaseError(err)
+	}
+	return nil
 }
 
 func (r *GoalRepository) UpdateFields(ctx context.Context, id ulid.ULID, fields map[string]interface{}) error {
-	return r.DB.WithContext(ctx).Table("goals").Where("id = ?", id.String()).Updates(fields).Error
+	if err := r.DB.WithContext(ctx).Table("goals").Where("id = ?", id.String()).Updates(fields).Error; err != nil {
+		return appErrors.NewDatabaseError(err)
+	}
+	return nil
 }
 
 func (r *GoalRepository) CheckGoalBelongsToUser(ctx context.Context, goalID ulid.ULID, userID ulid.ULID) (bool, error) {
 	var count int64
-	err := r.DB.WithContext(ctx).Table("goals").Where("id = ? AND user_id = ?", goalID.String(), userID.String()).Count(&count).Error
-
-	if err != nil {
-		return false, err
+	if err := r.DB.WithContext(ctx).Table("goals").Where("id = ? AND user_id = ?", goalID.String(), userID.String()).Count(&count).Error; err != nil {
+		return false, appErrors.NewDatabaseError(err)
 	}
 	return count > 0, nil
 }
