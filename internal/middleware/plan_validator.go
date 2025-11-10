@@ -4,9 +4,22 @@ import (
 	"net/http"
 
 	"Fynance/internal/domain/user"
+	appErrors "Fynance/internal/errors"
 
 	"github.com/gin-gonic/gin"
 )
+
+func respondPlan(c *gin.Context, err *appErrors.AppError) {
+	payload := gin.H{
+		"error":   err.Code,
+		"message": err.Message,
+	}
+	if len(err.Details) > 0 {
+		payload["details"] = err.Details
+	}
+	c.JSON(err.StatusCode, payload)
+	c.Abort()
+}
 
 func RequirePlan(allowedPlans ...user.Plan) gin.HandlerFunc {
 	plans := make(map[user.Plan]struct{}, len(allowedPlans))
@@ -17,15 +30,15 @@ func RequirePlan(allowedPlans ...user.Plan) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		planValue, exists := c.Get("plan")
 		if !exists {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Plano nao encontrado para o usuario autenticado"})
-			c.Abort()
+			err := appErrors.WrapError(nil, appErrors.ErrForbidden.Code, "Plano não encontrado para o usuário autenticado", http.StatusForbidden)
+			respondPlan(c, err)
 			return
 		}
 
 		plan, ok := planValue.(user.Plan)
 		if !ok {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Plano invalido para o usuario autenticado"})
-			c.Abort()
+			err := appErrors.WrapError(nil, appErrors.ErrForbidden.Code, "Plano inválido para o usuário autenticado", http.StatusForbidden)
+			respondPlan(c, err)
 			return
 		}
 
@@ -35,8 +48,8 @@ func RequirePlan(allowedPlans ...user.Plan) gin.HandlerFunc {
 		}
 
 		if _, allowed := plans[plan]; !allowed {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Plano incompativel com a operacao solicitada"})
-			c.Abort()
+			err := appErrors.WrapError(nil, appErrors.ErrForbidden.Code, "Plano incompatível com a operação solicitada", http.StatusForbidden)
+			respondPlan(c, err)
 			return
 		}
 
