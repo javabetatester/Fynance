@@ -1,10 +1,13 @@
 package infrastructure
 
 import (
-	"Fynance/internal/domain/investment"
-	"Fynance/internal/pkg"
 	"context"
+	"errors"
 	"time"
+
+	"Fynance/internal/domain/investment"
+	appErrors "Fynance/internal/errors"
+	"Fynance/internal/pkg"
 
 	"github.com/oklog/ulid/v2"
 	"gorm.io/gorm"
@@ -30,11 +33,11 @@ type investmentDB struct {
 func toDomainInvestment(idb *investmentDB) (*investment.Investment, error) {
 	id, err := pkg.ParseULID(idb.Id)
 	if err != nil {
-		return nil, err
+		return nil, appErrors.ErrInternalServer.WithError(err)
 	}
 	uid, err := pkg.ParseULID(idb.UserId)
 	if err != nil {
-		return nil, err
+		return nil, appErrors.ErrInternalServer.WithError(err)
 	}
 	return &investment.Investment{
 		Id:              id,
@@ -67,7 +70,10 @@ func toDBInvestment(inv *investment.Investment) *investmentDB {
 
 func (r *InvestmentRepository) Create(ctx context.Context, inv *investment.Investment) error {
 	idb := toDBInvestment(inv)
-	return r.DB.WithContext(ctx).Table("investments").Create(idb).Error
+	if err := r.DB.WithContext(ctx).Table("investments").Create(idb).Error; err != nil {
+		return appErrors.NewDatabaseError(err)
+	}
+	return nil
 }
 
 func (r *InvestmentRepository) List(ctx context.Context, userId ulid.ULID) ([]*investment.Investment, error) {
@@ -76,7 +82,7 @@ func (r *InvestmentRepository) List(ctx context.Context, userId ulid.ULID) ([]*i
 		Order("application_date DESC").
 		Find(&rows).Error
 	if err != nil {
-		return nil, err
+		return nil, appErrors.NewDatabaseError(err)
 	}
 	out := make([]*investment.Investment, 0, len(rows))
 	for i := range rows {
@@ -91,12 +97,22 @@ func (r *InvestmentRepository) List(ctx context.Context, userId ulid.ULID) ([]*i
 
 func (r *InvestmentRepository) Update(ctx context.Context, inv *investment.Investment) error {
 	idb := toDBInvestment(inv)
-	return r.DB.WithContext(ctx).Table("investments").Where("id = ?", idb.Id).Updates(idb).Error
+	if err := r.DB.WithContext(ctx).Table("investments").Where("id = ?", idb.Id).Updates(idb).Error; err != nil {
+		return appErrors.NewDatabaseError(err)
+	}
+	return nil
 }
 
 func (r *InvestmentRepository) Delete(ctx context.Context, id ulid.ULID, userId ulid.ULID) error {
-	return r.DB.WithContext(ctx).Table("investments").Where("id = ? AND user_id = ?", id.String(), userId.String()).
-		Delete(&investmentDB{}).Error
+	result := r.DB.WithContext(ctx).Table("investments").Where("id = ? AND user_id = ?", id.String(), userId.String()).
+		Delete(&investmentDB{})
+	if result.Error != nil {
+		return appErrors.NewDatabaseError(result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return appErrors.ErrInvestmentNotFound
+	}
+	return nil
 }
 
 func (r *InvestmentRepository) GetInvestmentById(ctx context.Context, id ulid.ULID, userId ulid.ULID) (*investment.Investment, error) {
@@ -104,7 +120,10 @@ func (r *InvestmentRepository) GetInvestmentById(ctx context.Context, id ulid.UL
 	err := r.DB.WithContext(ctx).Table("investments").Where("id = ? AND user_id = ?", id.String(), userId.String()).
 		First(&row).Error
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, appErrors.ErrInvestmentNotFound.WithError(err)
+		}
+		return nil, appErrors.NewDatabaseError(err)
 	}
 	return toDomainInvestment(&row)
 }
@@ -115,7 +134,7 @@ func (r *InvestmentRepository) GetByUserId(ctx context.Context, userId ulid.ULID
 		Order("application_date DESC").
 		Find(&rows).Error
 	if err != nil {
-		return nil, err
+		return nil, appErrors.NewDatabaseError(err)
 	}
 	out := make([]*investment.Investment, 0, len(rows))
 	for i := range rows {
@@ -134,7 +153,10 @@ func (r *InvestmentRepository) GetTotalBalance(ctx context.Context, userId ulid.
 		Where("user_id = ?", userId.String()).
 		Select("COALESCE(SUM(current_balance), 0)").
 		Scan(&total).Error
-	return total, err
+	if err != nil {
+		return 0, appErrors.NewDatabaseError(err)
+	}
+	return total, nil
 }
 
 func (r *InvestmentRepository) GetByType(ctx context.Context, userId ulid.ULID, investmentType investment.Types) ([]*investment.Investment, error) {
@@ -143,7 +165,7 @@ func (r *InvestmentRepository) GetByType(ctx context.Context, userId ulid.ULID, 
 		Order("application_date DESC").
 		Find(&rows).Error
 	if err != nil {
-		return nil, err
+		return nil, appErrors.NewDatabaseError(err)
 	}
 	out := make([]*investment.Investment, 0, len(rows))
 	for i := range rows {
