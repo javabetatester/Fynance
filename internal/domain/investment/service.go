@@ -2,13 +2,14 @@ package investment
 
 import (
 	"context"
+	"fmt"
+	"strings"
+	"time"
 
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
+	appErrors "Fynance/internal/errors"
 	"Fynance/internal/pkg"
-	"errors"
-	"strings"
-	"time"
 
 	"github.com/oklog/ulid/v2"
 )
@@ -20,62 +21,48 @@ type Service struct {
 }
 
 func NewService(repo Repository, transactionRepo transaction.Repository) *Service {
-	return &Service{
-		Repository:      repo,
-		TransactionRepo: transactionRepo,
-	}
+	return &Service{Repository: repo, TransactionRepo: transactionRepo}
 }
 
 func (s *Service) CreateInvestment(ctx context.Context, req CreateInvestmentRequest) (*Investment, error) {
-	investmentId := pkg.GenerateULIDObject()
-
 	if err := s.ensureUserExists(ctx, req.UserId); err != nil {
 		return nil, err
 	}
 
-	req.Name = strings.TrimSpace(req.Name)
-	if req.Name == "" {
-		return nil, errors.New("name is required")
+	trimmedName := strings.TrimSpace(req.Name)
+	if trimmedName == "" {
+		return nil, appErrors.NewValidationError("name", "é obrigatório")
 	}
+	req.Name = trimmedName
 
-	investment, err := s.CreateInvestmentStruct(req, investmentId)
-	if err != nil {
+	investmentID := pkg.GenerateULIDObject()
+	entity := s.CreateInvestmentStruct(req, investmentID)
+
+	if err := s.Repository.Create(ctx, entity); err != nil {
 		return nil, err
 	}
 
-	if err = s.Repository.Create(ctx, investment); err != nil {
+	movement := s.CreateTransactionStruct(req, investmentID)
+	if err := s.TransactionRepo.Create(ctx, movement); err != nil {
+		_ = s.Repository.Delete(ctx, investmentID, req.UserId)
 		return nil, err
 	}
 
-	trans, err := s.CreateTransactionStruct(req, investmentId)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := s.TransactionRepo.Create(ctx, trans); err != nil {
-		s.Repository.Delete(ctx, investmentId, req.UserId)
-		return nil, err
-	}
-
-	return investment, nil
+	return entity, nil
 }
 
-func (s *Service) MakeContribution(ctx context.Context, investmentId, userId ulid.ULID, amount float64, description string) error {
+func (s *Service) MakeContribution(ctx context.Context, investmentID, userID ulid.ULID, amount float64, description string) error {
 	if amount <= 0 {
-		return errors.New("amount must be greater than 0")
+		return appErrors.NewValidationError("amount", "deve ser maior que zero")
 	}
 
-	investment, err := s.Repository.GetInvestmentById(ctx, investmentId, userId)
-	if err != nil {
-		return errors.New("investment not found")
-	}
-
-	trans, err := s.makeInvestmentMovement(investmentId, userId, amount, description, transaction.Investment)
+	investment, err := s.Repository.GetInvestmentById(ctx, investmentID, userID)
 	if err != nil {
 		return err
 	}
 
-	if err := s.TransactionRepo.Create(ctx, trans); err != nil {
+	movement := s.makeInvestmentMovement(investmentID, userID, amount, description, transaction.Investment)
+	if err := s.TransactionRepo.Create(ctx, movement); err != nil {
 		return err
 	}
 
@@ -83,26 +70,22 @@ func (s *Service) MakeContribution(ctx context.Context, investmentId, userId uli
 	return s.Repository.Update(ctx, investment)
 }
 
-func (s *Service) MakeWithdraw(ctx context.Context, investmentId, userId ulid.ULID, amount float64, description string) error {
+func (s *Service) MakeWithdraw(ctx context.Context, investmentID, userID ulid.ULID, amount float64, description string) error {
 	if amount <= 0 {
-		return errors.New("amount must be greater than 0")
+		return appErrors.NewValidationError("amount", "deve ser maior que zero")
 	}
 
-	investment, err := s.Repository.GetInvestmentById(ctx, investmentId, userId)
-	if err != nil {
-		return errors.New("investment not found")
-	}
-
-	if investment.CurrentBalance < amount {
-		return errors.New("insufficient balance in investment")
-	}
-
-	trans, err := s.makeInvestmentMovement(investmentId, userId, amount, description, transaction.Withdraw)
+	investment, err := s.Repository.GetInvestmentById(ctx, investmentID, userID)
 	if err != nil {
 		return err
 	}
 
-	if err := s.TransactionRepo.Create(ctx, trans); err != nil {
+	if investment.CurrentBalance < amount {
+		return appErrors.NewValidationError("amount", "saldo insuficiente no investimento")
+	}
+
+	movement := s.makeInvestmentMovement(investmentID, userID, amount, description, transaction.Withdraw)
+	if err := s.TransactionRepo.Create(ctx, movement); err != nil {
 		return err
 	}
 
@@ -110,46 +93,46 @@ func (s *Service) MakeWithdraw(ctx context.Context, investmentId, userId ulid.UL
 	return s.Repository.Update(ctx, investment)
 }
 
-func (s *Service) ListInvestments(ctx context.Context, userId ulid.ULID) ([]*Investment, error) {
-	if err := s.ensureUserExists(ctx, userId); err != nil {
+func (s *Service) ListInvestments(ctx context.Context, userID ulid.ULID) ([]*Investment, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return nil, err
 	}
-	return s.Repository.GetByUserId(ctx, userId)
+	return s.Repository.GetByUserId(ctx, userID)
 }
 
-func (s *Service) GetInvestment(ctx context.Context, investmentId, userId ulid.ULID) (*Investment, error) {
-	if err := s.ensureUserExists(ctx, userId); err != nil {
+func (s *Service) GetInvestment(ctx context.Context, investmentID, userID ulid.ULID) (*Investment, error) {
+	if err := s.ensureUserExists(ctx, userID); err != nil {
 		return nil, err
 	}
-	return s.Repository.GetInvestmentById(ctx, investmentId, userId)
+	return s.Repository.GetInvestmentById(ctx, investmentID, userID)
 }
 
-func (s *Service) GetTotalInvested(ctx context.Context, investmentId, userId ulid.ULID) (float64, error) {
-	transactions, err := s.TransactionRepo.GetByInvestmentId(ctx, investmentId, userId)
+func (s *Service) GetTotalInvested(ctx context.Context, investmentID, userID ulid.ULID) (float64, error) {
+	transactions, err := s.TransactionRepo.GetByInvestmentId(ctx, investmentID, userID)
 	if err != nil {
 		return 0, err
 	}
 
 	var total float64
-	for _, trans := range transactions {
-		switch trans.Type {
+	for _, tx := range transactions {
+		switch tx.Type {
 		case transaction.Investment:
-			total += trans.Amount
+			total += tx.Amount
 		case transaction.Withdraw:
-			total -= trans.Amount
+			total -= tx.Amount
 		}
 	}
 
 	return total, nil
 }
 
-func (s *Service) CalculateReturn(ctx context.Context, investmentId, userId ulid.ULID) (float64, float64, error) {
-	investment, err := s.Repository.GetInvestmentById(ctx, investmentId, userId)
+func (s *Service) CalculateReturn(ctx context.Context, investmentID, userID ulid.ULID) (float64, float64, error) {
+	investment, err := s.Repository.GetInvestmentById(ctx, investmentID, userID)
 	if err != nil {
 		return 0, 0, err
 	}
 
-	totalInvested, err := s.GetTotalInvested(ctx, investmentId, userId)
+	totalInvested, err := s.GetTotalInvested(ctx, investmentID, userID)
 	if err != nil {
 		return 0, 0, err
 	}
@@ -164,21 +147,21 @@ func (s *Service) CalculateReturn(ctx context.Context, investmentId, userId ulid
 	return profit, returnPercentage, nil
 }
 
-func (s *Service) DeleteInvestment(ctx context.Context, investmentId, userId ulid.ULID) error {
-	investment, err := s.Repository.GetInvestmentById(ctx, investmentId, userId)
+func (s *Service) DeleteInvestment(ctx context.Context, investmentID, userID ulid.ULID) error {
+	investment, err := s.Repository.GetInvestmentById(ctx, investmentID, userID)
 	if err != nil {
 		return err
 	}
 
 	if investment.CurrentBalance > 0 {
-		return errors.New("cannot delete investment with balance")
+		return appErrors.NewValidationError("investment", "possui saldo e não pode ser removido")
 	}
 
-	return s.Repository.Delete(ctx, investmentId, userId)
+	return s.Repository.Delete(ctx, investmentID, userID)
 }
 
-func (s *Service) UpdateInvestment(ctx context.Context, investmentId, userId ulid.ULID, req UpdateInvestmentRequest) error {
-	investment, err := s.Repository.GetInvestmentById(ctx, investmentId, userId)
+func (s *Service) UpdateInvestment(ctx context.Context, investmentID, userID ulid.ULID, req UpdateInvestmentRequest) error {
+	investment, err := s.Repository.GetInvestmentById(ctx, investmentID, userID)
 	if err != nil {
 		return err
 	}
@@ -186,7 +169,7 @@ func (s *Service) UpdateInvestment(ctx context.Context, investmentId, userId uli
 	if req.Name != nil {
 		trimmed := strings.TrimSpace(*req.Name)
 		if trimmed == "" {
-			return errors.New("name is required")
+			return appErrors.NewValidationError("name", "é obrigatório")
 		}
 		investment.Name = trimmed
 	}
@@ -200,15 +183,14 @@ func (s *Service) UpdateInvestment(ctx context.Context, investmentId, userId uli
 	}
 
 	investment.UpdatedAt = time.Now()
-
 	return s.Repository.Update(ctx, investment)
 }
 
-func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, InvestmentId ulid.ULID) (*Investment, error) {
+func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, investmentID ulid.ULID) *Investment {
 	now := pkg.SetTimestamps()
 
-	investment := &Investment{
-		Id:              InvestmentId,
+	return &Investment{
+		Id:              investmentID,
 		UserId:          req.UserId,
 		Type:            Types(req.Type),
 		Name:            req.Name,
@@ -219,11 +201,9 @@ func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, Investment
 		CreatedAt:       now,
 		UpdatedAt:       now,
 	}
-
-	return investment, nil
 }
 
-func (s *Service) CreateTransactionStruct(req CreateInvestmentRequest, InvestmentId ulid.ULID) (*transaction.Transaction, error) {
+func (s *Service) CreateTransactionStruct(req CreateInvestmentRequest, investmentID ulid.ULID) *transaction.Transaction {
 	now := pkg.SetTimestamps()
 
 	return &transaction.Transaction{
@@ -233,13 +213,13 @@ func (s *Service) CreateTransactionStruct(req CreateInvestmentRequest, Investmen
 		Amount:       req.InitialAmount,
 		Description:  "Aporte inicial - " + req.Name,
 		Date:         now,
-		InvestmentId: &InvestmentId,
+		InvestmentId: &investmentID,
 		CreatedAt:    now,
 		UpdatedAt:    now,
-	}, nil
+	}
 }
 
-func (s *Service) makeInvestmentMovement(investmentId, userId ulid.ULID, amount float64, description string, movementType transaction.Types) (*transaction.Transaction, error) {
+func (s *Service) makeInvestmentMovement(investmentID, userID ulid.ULID, amount float64, description string, movementType transaction.Types) *transaction.Transaction {
 	desc := strings.TrimSpace(description)
 	if desc == "" {
 		if movementType == transaction.Withdraw {
@@ -253,24 +233,24 @@ func (s *Service) makeInvestmentMovement(investmentId, userId ulid.ULID, amount 
 
 	return &transaction.Transaction{
 		Id:           pkg.GenerateULIDObject(),
-		UserId:       userId,
+		UserId:       userID,
 		Type:         movementType,
 		Amount:       amount,
 		Description:  desc,
 		Date:         now,
-		InvestmentId: &investmentId,
+		InvestmentId: &investmentID,
 		CreatedAt:    now,
 		UpdatedAt:    now,
-	}, nil
+	}
 }
 
 func (s *Service) ensureUserExists(ctx context.Context, userID ulid.ULID) error {
 	if s.UserService == nil {
-		return errors.New("user service not configured")
+		return appErrors.ErrInternalServer.WithError(fmt.Errorf("serviço de usuário não configurado"))
 	}
 	_, err := s.UserService.GetByID(ctx, userID.String())
 	if err != nil {
-		return errors.New("user not found")
+		return appErrors.ErrUserNotFound.WithError(err)
 	}
 	return nil
 }
