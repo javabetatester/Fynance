@@ -124,19 +124,32 @@ O projeto segue os princípios de **Clean Architecture** e **SOLID**, com separa
 - **PostgreSQL 12+**: [Download e instalação](https://www.postgresql.org/download/)
 - **Git**: Para clonar o repositório
 
-### Variáveis de Ambiente (Opcional)
-Atualmente, a conexão com o banco de dados está configurada diretamente no código. Para produção, recomenda-se usar variáveis de ambiente:
+### Variáveis de Ambiente (Obrigatórias)
+A aplicação não inicia se as credenciais mínimas não estiverem definidas. Configure antes de executar:
 
 ```bash
 DB_HOST=localhost
 DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=admin
-DB_NAME=postgres
+DB_USER=<usuario_do_banco>
+DB_PASSWORD=<senha_do_banco>
+DB_NAME=fynance
 DB_SSL_MODE=disable
-JWT_SECRET_KEY=sua_chave_secreta_aqui
-JWT_ISSUER=fynance
+DB_TIMEZONE=UTC
+DB_MAX_OPEN_CONNS=25
+DB_MAX_IDLE_CONNS=5
+DB_CONN_MAX_LIFETIME=5m
+JWT_SECRET_KEY=<chave-com-no-minimo-32-caracteres>
+JWT_ISSUER=fynance_api
+JWT_EXPIRES_IN=24h
+APP_ENV=development
+LOG_LEVEL=info
+SERVER_PORT=8080
+SERVER_READ_TIMEOUT=15s
+SERVER_WRITE_TIMEOUT=15s
+SERVER_IDLE_TIMEOUT=60s
 ```
+
+Sugestão: crie um arquivo `.env` (não comite) e carregue com ferramentas como `direnv` ou `dotenvx`. Em produção, armazene segredos em um secret manager (AWS Secrets Manager, HashiCorp Vault ou Secret Manager da sua cloud).
 
 ## Instalação
 
@@ -155,15 +168,7 @@ go mod download
 
 ### 3. Configurar Banco de Dados PostgreSQL
 
-Certifique-se de que o PostgreSQL está instalado e rodando. Por padrão, a aplicação espera:
-
-- **Host**: localhost
-- **Porta**: 5432
-- **Usuário**: postgres
-- **Senha**: admin
-- **Database**: postgres
-
-Para alterar essas configurações, edite o arquivo `internal/infrastructure/db.go`.
+Certifique-se de que o PostgreSQL está instalado e rodando e que as variáveis `DB_*` apontam para o servidor correto. Não é necessário alterar código; toda a configuração passa por variáveis de ambiente.
 
 ### 4. Criar Banco de Dados (se necessário)
 
@@ -177,12 +182,12 @@ As migrações são executadas automaticamente na inicialização da aplicação
 
 ### Configuração do Banco de Dados
 
-O arquivo `internal/infrastructure/db.go` contém a configuração de conexão. Para produção, recomenda-se:
+A carga de configuração ocorre em `config/config.go`. Recomendações para produção:
 
-1. Usar variáveis de ambiente
-2. Implementar connection pooling adequado
-3. Configurar SSL/TLS para conexões seguras
-4. Usar credenciais seguras
+1. Armazene segredos em secret manager com rotação automatizada
+2. Ative SSL/TLS para conexões seguras (`DB_SSL_MODE=require`)
+3. Ajuste `DB_MAX_OPEN_CONNS`, `DB_MAX_IDLE_CONNS` e `DB_CONN_MAX_LIFETIME` conforme a carga
+4. Restringa privilégios do usuário do banco apenas ao schema utilizado
 
 ### Migrações
 
@@ -321,6 +326,7 @@ Os tokens JWT têm validade de 24 horas. Após expirar, é necessário fazer log
 - **Validação de Propriedade**: Middleware garante que usuários só acessem seus próprios recursos
 - **Validação de Planos**: Sistema de planos permite controle granular de acesso
 - **Validação de Entrada**: Validação de dados de entrada em todos os endpoints
+- **Tratamento Centralizado de Erros**: API responde usando códigos padronizados (`AppError`) e logs estruturados
 - **HTTPS Recomendado**: Para produção, utilize HTTPS para proteger dados em trânsito
 
 ### Boas Práticas
@@ -330,6 +336,14 @@ Os tokens JWT têm validade de 24 horas. Após expirar, é necessário fazer log
 - Implemente rate limiting em produção
 - Configure CORS adequadamente
 - Monitore tentativas de acesso não autorizadas
+
+## Tratamento de Erros
+
+- Todas as exceções são convertidas em `AppError`, com código, mensagem e status HTTP padronizados
+- Logs estruturados (`zerolog`) registram código, rota e causa raiz dos erros
+- Middlewares retornam mensagens genéricas para evitar vazamento de detalhes sensíveis
+- Validações de entrada retornam `VALIDATION_ERROR` com o campo impactado e descrição
+- Falhas de infraestrutura são encapsuladas como `DATABASE_ERROR`, mantendo contexto para observabilidade
 
 ## Estrutura do Projeto
 
