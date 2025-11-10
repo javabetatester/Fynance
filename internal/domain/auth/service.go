@@ -2,10 +2,10 @@ package auth
 
 import (
 	"context"
+	"regexp"
 
 	"Fynance/internal/domain/user"
-	"errors"
-	"regexp"
+	appErrors "Fynance/internal/errors"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -16,89 +16,80 @@ type Service struct {
 }
 
 func (s *Service) Login(ctx context.Context, login Login) (*user.User, error) {
-	if !s.UserExists(ctx, login.Email) {
-		return nil, errors.New("account does not exist")
-	}
-
-	user, err := s.GetByEmail(ctx, login.Email)
+	entity, err := s.Repository.GetByEmail(ctx, login.Email)
 	if err != nil {
-		return nil, errors.New("invalid credentials")
-	}
-
-	if err := PasswordValidate(login.Password, user.Password); err != nil {
+		if appErr, ok := appErrors.AsAppError(err); ok && appErr.Code == appErrors.ErrUserNotFound.Code {
+			return nil, appErrors.ErrInvalidCredentials
+		}
 		return nil, err
 	}
-
-	return user, nil
+	if err := PasswordValidate(login.Password, entity.Password); err != nil {
+		return nil, err
+	}
+	return entity, nil
 }
 
 func (s *Service) Register(ctx context.Context, user *user.User) error {
-	if s.UserExists(ctx, user.Email) {
-		return errors.New("email already registered")
+	exists, err := s.emailExists(ctx, user.Email)
+	if err != nil {
+		return err
 	}
-
+	if exists {
+		return appErrors.ErrEmailAlreadyExists
+	}
 	if err := PasswordRequirements(user.Password); err != nil {
 		return err
 	}
-
 	if err := s.UserService.Create(ctx, user); err != nil {
 		return err
 	}
-
 	return nil
 }
 
-func (s *Service) GetByEmail(ctx context.Context, email string) (*user.User, error) {
-	user, err := s.Repository.GetByEmail(ctx, email)
-	if err != nil {
-		return nil, err
+func (s *Service) emailExists(ctx context.Context, email string) (bool, error) {
+	_, err := s.Repository.GetByEmail(ctx, email)
+	if err == nil {
+		return true, nil
 	}
-
-	return user, nil
+	appErr, ok := appErrors.AsAppError(err)
+	if !ok {
+		return false, appErrors.ErrInternalServer.WithError(err)
+	}
+	if appErr.Code == appErrors.ErrUserNotFound.Code {
+		return false, nil
+	}
+	return false, appErr
 }
 
-func (s *Service) UserExists(ctx context.Context, email string) bool {
-	_, err := s.GetByEmail(ctx, email)
-	return err == nil
-}
-
-func PasswordRequirements(senha string) error {
-	if len(senha) < 8 {
-		return errors.New("the password must be at least 8 characters long")
+func PasswordRequirements(password string) error {
+	if len(password) < 8 {
+		return appErrors.NewValidationError("password", "deve conter no mínimo 8 caracteres")
 	}
-
-	temMaiuscula, _ := regexp.MatchString(`[A-Z]`, senha)
-	if !temMaiuscula {
-		return errors.New("the password must contain at least one uppercase letter")
+	hasUpper, _ := regexp.MatchString(`[A-Z]`, password)
+	if !hasUpper {
+		return appErrors.NewValidationError("password", "deve conter ao menos uma letra maiúscula")
 	}
-
-	temEspecial, _ := regexp.MatchString(`[@$!%*?&#]`, senha)
-	if !temEspecial {
-		return errors.New("the password must contain at least one special character (@$!%*?&#)")
+	hasSpecial, _ := regexp.MatchString(`[@$!%*?&#]`, password)
+	if !hasSpecial {
+		return appErrors.NewValidationError("password", "deve conter ao menos um caractere especial (@$!%*?&#)")
 	}
-
 	return nil
 }
 
-func PasswordValidate(lpassword string, upassword string) error {
-
-	if lpassword == "" {
-		return errors.New("password must be filled")
+func PasswordValidate(inputPassword string, storedPassword string) error {
+	if inputPassword == "" {
+		return appErrors.NewValidationError("password", "deve ser informado")
 	}
-
-	if err := bcrypt.CompareHashAndPassword([]byte(upassword), []byte(lpassword)); err != nil {
-		return errors.New("invalid credentials")
+	if err := bcrypt.CompareHashAndPassword([]byte(storedPassword), []byte(inputPassword)); err != nil {
+		return appErrors.ErrInvalidCredentials
 	}
-
 	return nil
 }
 
 func PasswordHashing(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", err
+		return "", appErrors.ErrInternalServer.WithError(err)
 	}
-
-	password = string(hash)
-	return password, nil
+	return string(hash), nil
 }
