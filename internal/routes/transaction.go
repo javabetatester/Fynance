@@ -1,34 +1,32 @@
 package routes
 
 import (
-	"errors"
-	"net/http"
-
 	"Fynance/internal/contracts"
 	"Fynance/internal/domain/transaction"
+	appErrors "Fynance/internal/errors"
 	"Fynance/internal/pkg"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func (h *Handler) CreateTransaction(c *gin.Context) {
 	var body contracts.TransactionCreateRequest
 
 	if err := c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.ErrBadRequest.WithError(err))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	categoryID, err := pkg.ParseULID(body.CategoryID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.NewValidationError("category_id", "formato inválido"))
 		return
 	}
 
@@ -43,7 +41,7 @@ func (h *Handler) CreateTransaction(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	if err := h.TransactionService.CreateTransaction(ctx, &transactionEntity); err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -56,14 +54,14 @@ func (h *Handler) CreateTransaction(c *gin.Context) {
 func (h *Handler) GetTransactions(c *gin.Context) {
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 	transactions, err := h.TransactionService.GetAllTransactions(ctx, userID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -73,24 +71,20 @@ func (h *Handler) GetTransactions(c *gin.Context) {
 func (h *Handler) GetTransaction(c *gin.Context) {
 	transactionID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de transação inválido"})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 	transactionEntity, err := h.TransactionService.GetTransactionByID(ctx, transactionID, userID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) || err.Error() == "transaction does not belong to user" {
-			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Transação não encontrada"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -100,25 +94,25 @@ func (h *Handler) GetTransaction(c *gin.Context) {
 func (h *Handler) UpdateTransaction(c *gin.Context) {
 	transactionID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de transação inválido"})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	var body contracts.TransactionUpdateRequest
 	if err = c.ShouldBindJSON(&body); err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.ErrBadRequest.WithError(err))
 		return
 	}
 
 	categoryID, err := pkg.ParseULID(body.CategoryID)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, appErrors.NewValidationError("category_id", "formato inválido"))
 		return
 	}
 
@@ -138,11 +132,7 @@ func (h *Handler) UpdateTransaction(c *gin.Context) {
 
 	ctx := c.Request.Context()
 	if err := h.TransactionService.UpdateTransaction(ctx, &transactionEntity); err != nil {
-		if err.Error() == "transaction does not belong to user" || errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Transação não encontrada"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
@@ -152,23 +142,19 @@ func (h *Handler) UpdateTransaction(c *gin.Context) {
 func (h *Handler) DeleteTransaction(c *gin.Context) {
 	transactionID, err := pkg.ParseULID(c.Param("id"))
 	if err != nil {
-		c.JSON(http.StatusBadRequest, contracts.ErrorResponse{Error: "id de transação inválido"})
+		h.respondError(c, appErrors.NewValidationError("id", "formato inválido"))
 		return
 	}
 
 	userID, err := h.GetUserIDFromContext(c)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
 	ctx := c.Request.Context()
 	if err := h.TransactionService.DeleteTransaction(ctx, transactionID, userID); err != nil {
-		if err.Error() == "transaction does not exist" || err.Error() == "transaction does not belong to user" || errors.Is(err, gorm.ErrRecordNotFound) {
-			c.JSON(http.StatusNotFound, contracts.ErrorResponse{Error: "Transação não encontrada"})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, contracts.ErrorResponse{Error: err.Error()})
+		h.respondError(c, err)
 		return
 	}
 
