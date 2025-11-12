@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	domaincontracts "Fynance/internal/domain/contracts"
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
 	appErrors "Fynance/internal/errors"
@@ -24,7 +25,7 @@ func NewService(repo Repository, transactionRepo transaction.Repository) *Servic
 	return &Service{Repository: repo, TransactionRepo: transactionRepo}
 }
 
-func (s *Service) CreateInvestment(ctx context.Context, req CreateInvestmentRequest) (*Investment, error) {
+func (s *Service) CreateInvestment(ctx context.Context, req domaincontracts.CreateInvestmentRequest) (*Investment, error) {
 	if err := s.ensureUserExists(ctx, req.UserId); err != nil {
 		return nil, err
 	}
@@ -160,7 +161,7 @@ func (s *Service) DeleteInvestment(ctx context.Context, investmentID, userID uli
 	return s.Repository.Delete(ctx, investmentID, userID)
 }
 
-func (s *Service) UpdateInvestment(ctx context.Context, investmentID, userID ulid.ULID, req UpdateInvestmentRequest) error {
+func (s *Service) UpdateInvestment(ctx context.Context, investmentID, userID ulid.ULID, req domaincontracts.UpdateInvestmentRequest) error {
 	investment, err := s.Repository.GetInvestmentById(ctx, investmentID, userID)
 	if err != nil {
 		return err
@@ -186,7 +187,7 @@ func (s *Service) UpdateInvestment(ctx context.Context, investmentID, userID uli
 	return s.Repository.Update(ctx, investment)
 }
 
-func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, investmentID ulid.ULID) *Investment {
+func (s *Service) CreateInvestmentStruct(req domaincontracts.CreateInvestmentRequest, investmentID ulid.ULID) *Investment {
 	now := pkg.SetTimestamps()
 
 	return &Investment{
@@ -203,7 +204,7 @@ func (s *Service) CreateInvestmentStruct(req CreateInvestmentRequest, investment
 	}
 }
 
-func (s *Service) CreateTransactionStruct(req CreateInvestmentRequest, investmentID ulid.ULID) *transaction.Transaction {
+func (s *Service) CreateTransactionStruct(req domaincontracts.CreateInvestmentRequest, investmentID ulid.ULID) *transaction.Transaction {
 	now := pkg.SetTimestamps()
 
 	return &transaction.Transaction{
