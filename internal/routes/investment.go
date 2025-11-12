@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"Fynance/internal/contracts"
-	"Fynance/internal/domain/investment"
+	domaincontracts "Fynance/internal/domain/contracts"
 	appErrors "Fynance/internal/errors"
 	"Fynance/internal/pkg"
 
@@ -24,9 +24,9 @@ func (h *Handler) CreateInvestment(c *gin.Context) {
 		return
 	}
 
-	req := investment.CreateInvestmentRequest{
+	req := domaincontracts.CreateInvestmentRequest{
 		UserId:        userID,
-		Type:          investment.Types(body.Type),
+		Type:          body.Type,
 		Name:          body.Name,
 		InitialAmount: body.InitialAmount,
 		ReturnRate:    body.ReturnRate,
@@ -211,7 +211,7 @@ func (h *Handler) UpdateInvestment(c *gin.Context) {
 		return
 	}
 
-	updateReq := investment.UpdateInvestmentRequest{
+	updateReq := domaincontracts.UpdateInvestmentRequest{
 		UserId: userID,
 		Id:     investmentID,
 	}
