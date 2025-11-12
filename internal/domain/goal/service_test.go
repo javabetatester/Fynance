@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	domaincontracts "Fynance/internal/domain/contracts"
 	"Fynance/internal/domain/goal"
 	"Fynance/internal/domain/user"
 	appErrors "Fynance/internal/errors"
@@ -105,19 +106,19 @@ func TestValidate(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		input   goal.GoalCreateRequest
+		input   domaincontracts.GoalCreateRequest
 		wantErr string
 	}{
 		{
 			name: "missing name",
-			input: goal.GoalCreateRequest{
+			input: domaincontracts.GoalCreateRequest{
 				Target: 100,
 			},
 			wantErr: "VALIDATION_ERROR",
 		},
 		{
 			name: "invalid target",
-			input: goal.GoalCreateRequest{
+			input: domaincontracts.GoalCreateRequest{
 				Name:   "Emergency fund",
 				Target: 0,
 			},
@@ -125,7 +126,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name: "ended at in the past",
-			input: goal.GoalCreateRequest{
+			input: domaincontracts.GoalCreateRequest{
 				Name:   "Trip",
 				Target: 500,
 				EndedAt: func() *time.Time {
@@ -137,7 +138,7 @@ func TestValidate(t *testing.T) {
 		},
 		{
 			name: "valid request",
-			input: goal.GoalCreateRequest{
+			input: domaincontracts.GoalCreateRequest{
 				Name:   "Retirement",
 				Target: 1000,
 			},
@@ -203,7 +204,7 @@ func TestServiceCreateGoal(t *testing.T) {
 			goalRepo: &fakeGoalRepository{},
 		})
 
-		err := svc.CreateGoal(ctx, &goal.GoalCreateRequest{
+		err := svc.CreateGoal(ctx, &domaincontracts.GoalCreateRequest{
 			UserId: userID,
 			Name:   "New goal",
 			Target: 100,
@@ -233,7 +234,7 @@ func TestServiceCreateGoal(t *testing.T) {
 			},
 		})
 
-		err := svc.CreateGoal(ctx, &goal.GoalCreateRequest{
+		err := svc.CreateGoal(ctx, &domaincontracts.GoalCreateRequest{
 			UserId: userID,
 			Name:   "Build emergency fund",
 			Target: 2000,
@@ -280,12 +281,12 @@ func TestServiceUpdateGoalValidations(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		request goal.GoalUpdateRequest
+		request domaincontracts.GoalUpdateRequest
 		wantErr string
 	}{
 		{
 			name: "invalid target",
-			request: goal.GoalUpdateRequest{
+			request: domaincontracts.GoalUpdateRequest{
 				Id:     goalID,
 				UserId: userID,
 				Name:   "Updated",
@@ -295,7 +296,7 @@ func TestServiceUpdateGoalValidations(t *testing.T) {
 		},
 		{
 			name: "belongs to another user",
-			request: goal.GoalUpdateRequest{
+			request: domaincontracts.GoalUpdateRequest{
 				Id:     goalID,
 				UserId: ulid.Make(),
 				Name:   "Updated",
@@ -305,7 +306,7 @@ func TestServiceUpdateGoalValidations(t *testing.T) {
 		},
 		{
 			name: "success",
-			request: goal.GoalUpdateRequest{
+			request: domaincontracts.GoalUpdateRequest{
 				Id:     goalID,
 				UserId: userID,
 				Name:   "Updated",
