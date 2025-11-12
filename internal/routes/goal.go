@@ -2,7 +2,7 @@ package routes
 
 import (
 	"Fynance/internal/contracts"
-	"Fynance/internal/domain/goal"
+	domaincontracts "Fynance/internal/domain/contracts"
 	appErrors "Fynance/internal/errors"
 	"Fynance/internal/pkg"
 	"net/http"
@@ -23,7 +23,7 @@ func (h *Handler) CreateGoal(c *gin.Context) {
 		return
 	}
 
-	req := goal.GoalCreateRequest{
+	req := domaincontracts.GoalCreateRequest{
 		UserId:  userID,
 		Name:    body.Name,
 		Target:  body.Target,
@@ -64,7 +64,7 @@ func (h *Handler) UpdateGoal(c *gin.Context) {
 		return
 	}
 
-	req := goal.GoalUpdateRequest{
+	req := domaincontracts.GoalUpdateRequest{
 		Id:      goalID,
 		UserId:  userID,
 		Name:    body.Name,
