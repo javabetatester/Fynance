@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	domaincontracts "Fynance/internal/domain/contracts"
 	"Fynance/internal/domain/user"
 	appErrors "Fynance/internal/errors"
 	"Fynance/internal/pkg"
@@ -16,7 +17,7 @@ type Service struct {
 	UserService user.Service
 }
 
-func (s *Service) CreateGoal(ctx context.Context, request *GoalCreateRequest) error {
+func (s *Service) CreateGoal(ctx context.Context, request *domaincontracts.GoalCreateRequest) error {
 	if err := Validate(*request); err != nil {
 		return err
 	}
@@ -42,7 +43,7 @@ func (s *Service) CreateGoal(ctx context.Context, request *GoalCreateRequest) er
 	return s.Repository.Create(ctx, entity)
 }
 
-func (s *Service) UpdateGoal(ctx context.Context, request *GoalUpdateRequest) error {
+func (s *Service) UpdateGoal(ctx context.Context, request *domaincontracts.GoalUpdateRequest) error {
 	if err := ValidateUpdateGoal(*request); err != nil {
 		return err
 	}
@@ -101,7 +102,7 @@ func (s *Service) CheckGoalBelongsToUser(ctx context.Context, goalID ulid.ULID, 
 	return nil
 }
 
-func Validate(request GoalCreateRequest) error {
+func Validate(request domaincontracts.GoalCreateRequest) error {
 	if request.Name == "" {
 		return appErrors.NewValidationError("name", "é obrigatório")
 	}
@@ -114,7 +115,7 @@ func Validate(request GoalCreateRequest) error {
 	return nil
 }
 
-func ValidateUpdateGoal(request GoalUpdateRequest) error {
+func ValidateUpdateGoal(request domaincontracts.GoalUpdateRequest) error {
 	if request.Name == "" {
 		return appErrors.NewValidationError("name", "é obrigatório")
 	}
