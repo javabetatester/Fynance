@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	domaincontracts "Fynance/internal/domain/contracts"
 	"Fynance/internal/domain/investment"
 	"Fynance/internal/domain/transaction"
 	"Fynance/internal/domain/user"
@@ -379,7 +380,7 @@ func TestServiceUpdateInvestment(t *testing.T) {
 		},
 	}
 
-	req := investment.UpdateInvestmentRequest{
+	req := domaincontracts.UpdateInvestmentRequest{
 		UserId: userID,
 		Id:     investmentID,
 	}
